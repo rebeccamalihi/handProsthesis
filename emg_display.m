@@ -1,0 +1,36 @@
+%%This program is to display online monitoring of the myoband 8 channels in
+%%form of signals and imgs display time domaine is 1sec and frequensy is
+%%200Hz
+mm = MyoMex;
+m1 = mm.myoData;
+
+y = m1.isStreaming;
+e = 0;
+for i =1:100000
+    e = m1.emg_log;
+    e1 = abs(e(end - 199: end,1));
+    e2 = abs(e(end - 199: end,2));
+    e3 = abs(e(end - 199: end,3));
+    e4 = abs(e(end - 199: end,4));
+    e5 = abs(e(end - 199: end,5));
+    e6 = abs(e(end - 199: end,6));
+    e7 = abs(e(end - 199: end,7));
+    e8 = abs(e(end - 199: end,8));
+    figure(1);subplot(8,1,1);plot(e1);ylim([-1, 1]); drawnow;
+    figure(1);subplot(8,1,2);plot(e2);ylim([-1, 1]); drawnow;
+    figure(1);subplot(8,1,3);plot(e3);ylim([-1, 1]); drawnow;
+    figure(1);subplot(8,1,4);plot(e4);ylim([-1, 1]); drawnow;
+    figure(1);subplot(8,1,5);plot(e5);ylim([-1, 1]); drawnow;
+    figure(1);subplot(8,1,6);plot(e6);ylim([-1, 1]); drawnow;
+    figure(1);subplot(8,1,7);plot(e7);ylim([-1, 1]); drawnow;
+    figure(1);subplot(8,1,8);plot(e8);ylim([-1, 1]); drawnow;
+    emg_matrix = abs(e(end-49:end,:));
+    imwrite(emg_matrix,'emgpic.jpeg');
+    emg_img =imread('emgpic.jpeg');
+    emg_squared = imresize(emg_img,[200 200]);
+    figure(2);
+    imshow(emg_squared);
+    pause(0.05);
+end
+
+
