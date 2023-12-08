@@ -1,10 +1,10 @@
 %%This program is to display online monitoring of the myoband 8 channels in
 %%form of signals and imgs display time domaine is 1sec and frequensy is
 %%200Hz
-mm = MyoMex;
-m1 = mm.myoData;
+% mm = MyoMex;
+% m1 = mm.myoData;
 
-y = m1.isStreaming;
+%y = m1.isStreaming;
 e = 0;
 for i =1:100000
     e = m1.emg_log;

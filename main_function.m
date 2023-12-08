@@ -21,7 +21,7 @@ data_acquisition(name, session, m1);
 prompt = "should we proceed?[y/n]";
 reply = input(prompt,'s');
 emg_check(name)
-if reply == 'Y'
+if reply == 'y'
     dataConvertor(name, session);
     disp("Thank you for your time/Rebecca.")
 else

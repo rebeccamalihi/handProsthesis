@@ -1,5 +1,5 @@
 %% This program is to display the ras signals of 8 channels
-mm = MyoMex;
+%mm = MyoMex;
 m1 = mm.myoData;
 e = m1.emg_log;
 e1 = abs(e(:,1));
