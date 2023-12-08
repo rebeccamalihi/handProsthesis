@@ -97,6 +97,6 @@ plot(x,y);
 hold on 
 scatter(ypred(:,2),yTest);
 hold off
-rmse = 
+
 
 %[trainedModel, validationRMSE] = trainRegressionModel()

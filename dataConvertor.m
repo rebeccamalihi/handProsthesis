@@ -1,6 +1,6 @@
 %function dataConvertor(name,session)
 %%this function is created to convert the raw signals to images with size of 40*40
-session = 1; 
+session = 5; 
 name = 'Rebecka';
 folderName = fullfile("\Users\lab-admin\Desktop\Rebecca\" + name);
 fds = fileDatastore(folderName, 'FileExtensions', '.mat','ReadFcn', @importdata );
