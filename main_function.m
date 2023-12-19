@@ -13,8 +13,8 @@ session = input(prompt,'s');
 if isempty(name)
     name = "Rebecca";
 end
-mm = MyoMex();
-m1 = mm.myoData;
+% mm = MyoMex();
+% m1 = mm.myoData;
 
 %% main program
 data_acquisition(name, session, m1);

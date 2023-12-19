@@ -58,22 +58,8 @@ layers = [
     regressionLayer("Name","regressionoutput")];
 
 
-options = trainingOptions("sgdm", ...
-    'ValidationData',{imgValSamples,responseVal}, ...
-    'Plots',"training-progress",...
-    InitialLearnRate=0.001,...
-    Verbose=0,...
-    Shuffle="every-epoch",...
-    GradientThreshold=1e6);
-
-%end
-YTrain = YTrain';
-lbltables = table(imgSamples,YTrain);
-%net = trainNetwork(lbltables,layers,options);
-%net = fitrnet(imgSamples,response(:,1));
-
-for j =1:length(imdsTrain.Labels)
-    filename = imdsTrain.Files{j};
+for j =1:length(imdsVal.Labels)
+    filename = imdsVal.Files{j};
     imgdata2 = imread(filename);
     imgdata2Mat = im2double(imgdata2);
     imgValSamples(:,:,j) = imgdata2Mat;
@@ -87,9 +73,26 @@ for i = 1:length(labelsVal)
     y = [y;yTemp];
 end
 responseVal = [x,y];%table(x,y);
-net = trainNetwork(imgSamples,YTrain,layers,options);
+ %'ValidationData',{imgValSamples,responseVal}, ...
+options = trainingOptions("adam", ...
+    MaxEpochs = 120, ...
+    MiniBatchSize = 32, ...
+    Plots = "training-progress",...
+    InitialLearnRate=0.003,...
+    Verbose=0,...
+    Shuffle="every-epoch",...
+    GradientThreshold=1e4);
+%end
 
+YTrain = YTrain';
+lbltables = table(imgSamples,YTrain);
+net = trainNetwork(lbltables,layers,options);
+%net = fitrnet(imgSamples,response(:,1));
 
+%net = trainNetwork(imgSamples,YTrain,layers,options);
+ypred = predict(net,imdsTrain);
+
+rmse = sqrt(mean(ypred-))
 
 
 

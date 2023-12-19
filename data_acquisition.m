@@ -47,7 +47,7 @@ for k = 1:4 %each quadrant from pi/2 to 2pi is in the que
         end
         %e = m1.emg_log;
         %index2(length(index2)+1) = length(e);%start the recording
-        pause(3);
+        pause(60);
         e =m1.emg_log;
         sample.signal = e(end-599:end,:);
         data{end+1} = sample;% stores the three second long signal with labels

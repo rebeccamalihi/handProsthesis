@@ -30,4 +30,6 @@ for i = 1:length(data)
         imwrite(img_resize,fileName);
     end
 end
+
+
 %end
