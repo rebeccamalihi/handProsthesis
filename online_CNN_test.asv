@@ -1,0 +1,23 @@
+%% online check of the performance of the cnn
+i = 0;
+for i = 1:10
+    circle(0,0,1)
+    % e = m1.emg_log;
+    % mat = e(end-39:end,:);
+    % img_resize(:,:,1) = repelem(mat,1,5);
+    % imwrite(img_resize,"sample.jpeg");
+    % YPred = predict(net,img_resize);
+    % plot(YPred);
+    pause(0.5);
+
+end
+
+function h = circle(x,y,r)
+hold on
+th = 0 : pi/50:2*pi;
+xunit = r * cos(th) + x;
+yunit = r * sin(th) + y;
+h = plot(xunit,yunit);
+end
+
+

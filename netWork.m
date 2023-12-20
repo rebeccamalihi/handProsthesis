@@ -25,6 +25,7 @@ imgSamples = imgSamples';
 labels = imdsTrain.Labels;
 x = [];
 y = [];
+i = 0;
 for i = 1:length(labels)
     [xTemp,yTemp] = pol2cart(labels(i),1);
     x = [x;xTemp];
@@ -36,7 +37,16 @@ for l = 1:length(labels)
     YTrain{l} = response(l,:,:);
 end
 
-
+labelsTest = imdsTest.Labels;
+x = [];
+y = [];
+i = 0;
+for i = 1:length(labelsTest)
+    [xTemp,yTemp] = pol2cart(labelsTest(i),1);
+    x = [x;xTemp];
+    y = [y;yTemp];
+end
+YTest = [x,y];
 %%
 layers = [
     imageInputLayer([40 40 1],"Name","imageinput")
@@ -67,6 +77,7 @@ end
 labelsVal = imdsVal.Labels;
 x = [];
 y = [];
+i = 0;
 for i = 1:length(labelsVal)
     [xTemp,yTemp] = pol2cart(labels(i),1);
     x = [x;xTemp];
@@ -90,9 +101,9 @@ net = trainNetwork(lbltables,layers,options);
 %net = fitrnet(imgSamples,response(:,1));
 
 %net = trainNetwork(imgSamples,YTrain,layers,options);
-ypred = predict(net,imdsTrain);
+ypred = predict(net,imdsTest);
 
-rmse = sqrt(mean(ypred-))
+rmse = sqrt(mean(ypred-YTest()));
 
 
 
