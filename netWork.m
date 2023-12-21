@@ -50,7 +50,7 @@ YTest = [x,y];
 %%
 layers = [
     imageInputLayer([40 40 1],"Name","imageinput")
-    convolution2dLayer([3 3],32,"Name","conv","Padding","same")
+    convolution2dLayer([5 5],64,"Name","conv","Padding","same")
     reluLayer("Name","relu")
     fullyConnectedLayer(10,"Name","fc")
     reluLayer("Name","relu_1")
@@ -64,7 +64,7 @@ layers = [
     reluLayer("Name","relu_5")
     %fullyConnectedLayer(2,"Name","fc_3")
     fullyConnectedLayer(2,"Name","fc_5")
-    %scalingLayer("Name","scaling")
+    scalingLayer("Name","scaling")
     regressionLayer("Name","regressionoutput")];
 
 
@@ -75,7 +75,9 @@ for j =1:length(imdsVal.Labels)
     imgValSamples(:,:,j) = imgdata2Mat;
 end
 labelsVal = imdsVal.Labels;
-x = [];
+x = 
+
+
 y = [];
 i = 0;
 for i = 1:length(labelsVal)
@@ -86,13 +88,13 @@ end
 responseVal = [x,y];%table(x,y);
  %'ValidationData',{imgValSamples,responseVal}, ...
 options = trainingOptions("adam", ...
-    MaxEpochs = 120, ...
-    MiniBatchSize = 32, ...
+    MaxEpochs = 40, ...
+    MiniBatchSize = 64, ...
     Plots = "training-progress",...
-    InitialLearnRate=0.003,...
+    InitialLearnRate=0.002,...
     Verbose=0,...
     Shuffle="every-epoch",...
-    GradientThreshold=1e4);
+    GradientThreshold=1e2);
 %end
 
 YTrain = YTrain';
@@ -103,7 +105,7 @@ net = trainNetwork(lbltables,layers,options);
 %net = trainNetwork(imgSamples,YTrain,layers,options);
 ypred = predict(net,imdsTest);
 
-rmse = sqrt(mean(ypred-YTest()));
+rmse = sqrt(mean((ypred-YTest).^2));
 
 
 
