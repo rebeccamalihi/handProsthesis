@@ -2,41 +2,38 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
     %% Properties (set properties' attributes accordingly)
     properties
         % Specify and initialize environment's necessary properties    
-        %max radius of the area
+        % Max radius of the area
 
-%         load rebecca.mat
-%         index = index(2:end);
-%         location = location(1:20,1:2);
-%         whole_signal = e;
         
-        test_subject = 'rebecca';
-        %index0 = 1;
-        index_amount = 20;
-        counter = 1;
+        test_subject = 'Rebecca';
+        % Index0 = 1;
+        Reward = [];
+        % Index_amount = 20;
+        % Counter = 1;
         RewardForReachingGoal = 10;
-        blue_marker_radius = 0.08;   
+        blue_marker_radius = 0.08; % Acceptable distance to the goal point  
 
     end
     
     properties
-          State = {[0 0],[0 0],zeros(1800,8)}; %goal_location,act_location,8 channel EMG epoch 
+          State = {[0 0],[0 0],zeros(40,8)}; % Zeros(1800,8)}; % Goal_location, act_location, 8 channel EMG input 
     end
     
     properties(Access = protected)
         % Initialize internal flag to indicate episode termination
-        IsDone = 0;
+        IsDone = false;
         
-        %handle to figure
-        %Figure;
+        % handle to figure
+        Figure;
     end
 
     %% Necessary Methods
     methods              
-        % Contructor method creates an instance of the environment
+        % Constructor method creates an instance of the environment
         % Change class name and constructor name accordingly
         function this = MyoEnvironment()
             % Initialize Observation settings
-            ObservationInfo = rlNumericSpec([1800 8]);
+            ObservationInfo = rlNumericSpec([40 8]);
             ObservationInfo.Name = 'Observations';      
             ObservationInfo.Description = 'EMG epoch 8 channels';
             
@@ -69,11 +66,11 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
 
            
             Observation = this.State{3};
-            goal_location = this.state{1};
+            goal_location = this.State{1};
             goal_theta = goal_location(2);
             goal_ro = goal_location(1);
             [goal_x,goal_y] = pol2cart(goal_theta,goal_ro);
-            act_location = getLocation(this,Action);
+            act_location = getActionLocation(this,Action);
             act_theta = act_location(2);
             act_ro = act_location(1);
             [act_x,act_y] = pol2cart(act_theta,act_ro);
@@ -114,8 +111,8 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             end
             
             InitialObservation = epoch;
-            ac
-            this.State = {goal_location,[0 0], InitialObvervation};
+            act_location = this.State{2};
+            this.State = {goal_location, act_location, InitialObservation};
             
             notifyEnvUpdated(this);
 
@@ -126,42 +123,61 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         %Helper methods to create the environment
         %Discrete force 1 or 2
         function action_location = getActionLocation(this,Action)
-            if ~ismember(Action,this.ActionInfo.Elements)
-                error('Action is not valid');
-            end
+%             if ~ismember(Action,this.ActionInfo.Elements)
+%                 error('Action is not valid');
+%             end
             Action_theta = Action(2) * pi/180;
             Action_ro = Action(1) * 0.25;
             action_location = [Action_ro,Action_theta];           
         end
         
         function goal_location = getGoalLocation(this,i)
-            goal_location = load('rebeccaS1T1L.mat');
-            goal_location_theta = goal_location(i,2);
-            goal_location_ro = goal_location(i,1);
-            this.goal_location = [goal_location_ro,goal_location_theta];
+            data_location = load('rebeccaS1T1L.mat');
+            location = data_location.location;
+            goal_location_theta = location(i,2);
+            goal_location_ro = location(i,1);
+            goal_location = [goal_location_ro,goal_location_theta];
         end
            
         function index = getIndex(this,i)
-            index = load('rebeccaS1T1I.mat');
-            this.index = index(i);     
+            data_index = load('rebeccaS1T1I.mat');
+            index = data_index.index;
+            index = index(i);     
         end
-        function epoch = getEMG(this,i)
-            index = getIndex(this,i);
-            whole_EMG = load('rebeccaS1T1d.mat');
-            epoch = whole_EMG(index:index+1799,1:8);
-        end 
-         
+        % function epoch = getEMG(this,i)
+        %     index = getIndex(this,i);
+        %     data_whole_EMG = load('rebeccaS1T1d.mat');
+        %     whole_EMG = data_whole_EMG.e;
+        %     epoch = whole_EMG(index:index+1799,1:8);
+        % end 
+        function emg_sample = get_emg_info(this)
+            if exist('mm') == 0
+                mm = MyoMex();
+                m1 = mm.myoData;
+            end
+            e = m1.emg_log;
+            epoch = e(end-39:end,:);
+        end
+
+
         
-%         function plot(this)
-%             % Initiate the visualization
-%             this.Figure = figure('Visible','on','HandleVisibility','off');
-%             pax = polaraxes;
-%             pax.RLim = [0 1.25];
-%             pax = gca(this.Figure);
-%             hold(pax,'on');
-%             % Update the visualization
-%             envUpdatedCallback(this)
-%         end
+        function plot(this)
+            % Initiate the visualization
+            this.Figure = figure('Visible','on','HandleVisibility','off');
+            ha = gca(this.figure);
+            ha.XLimMode = 'manual';
+            ha.YLimMode = 'manual';
+            ha.XLim = [-1 1];
+            ha.YLim = [-1 1];
+            hold(ha,'on');
+
+            % pax = polaraxes;
+            % pax.RLim = [0 1.25];
+            % pax = gca(this.Figure);
+            % hold(pax,'on');
+            % Update the visualization
+            envUpdatedCallback(this)
+        end
 % % %         
 % 
     end
@@ -169,26 +185,32 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
     methods (Access = protected)
         % (optional) update visualization everytime the environment is updated 
         % (notifyEnvUpdated is called)
-%         function envUpdatedCallback(this)
-%             if ~isempty(this.Figure) && isvalid(this.Figure)
-%                 % Set visualization figure as the current figure
-%                 pax = gca(this.Figure);
-%                 
-%                 % draw the goal position area
-%                 th_blue_marker = linspace(0,2*pi,30);
-%                 [x_goal,y_goal] = pol2cart(th_blue_marker,this.blue_marker_radius);
-%                 goal_center = this.state{1};
-%                 theta_c = goal_center(2);
-%                 ro_c = goal_center(1);
-%                 [xc,yc] = pol2cart(theta_c,ro_c);
-%                 [th_b,r_b] = cart2pol(x_goal + xc,y_goal + yc);
-%                 polarplot(pax,th_b,r_b,'LineWidth',2);
-%                 action_center = this.state{2};
-%                 polarplot(pax, action_center(2),action_center(1),'.','MarkerSize',50,"color","r");
-%                 
-%                 % Refresh rendering in the figure window
-%                 drawnow();
-%             end
-%         end
+        function envUpdatedCallback(this)
+            if ~isempty(this.Figure) && isvalid(this.Figure)
+                % Set visualization figure as the current figure
+                ha = gca(this.Figure);
+                % draw the unit circle
+                th_red_marker = linspace(0,2*pi,30);
+                [x_unit,y_unit] = pol2cart(th_red_marker,1);
+
+
+                % draw the goal position area, target point and the
+                % acceptable radius
+                th_blue_marker = linspace(0,2*pi,60);
+                [x_goal,y_goal] = pol2cart(th_blue_marker,this.blue_marker_radius);
+
+                goal_center = this.state{1};
+                theta_c = goal_center(2);
+                ro_c = goal_center(1);
+                [xc,yc] = pol2cart(theta_c,ro_c);
+                [th_b,r_b] = cart2pol(x_goal + xc,y_goal + yc);
+                polarplot(pax,th_b,r_b,'LineWidth',2);
+                action_center = this.state{2};
+                polarplot(pax, action_center(2),action_center(1),'.','MarkerSize',50,"color","r");
+                
+                % Refresh rendering in the figure window
+                drawnow();
+            end
+        end
     end
 end
