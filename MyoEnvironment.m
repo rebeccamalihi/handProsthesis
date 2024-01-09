@@ -11,12 +11,19 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         % Index_amount = 20;
         % Counter = 1;
         RewardForReachingGoal = 10;
+        RewardForCorrectQuadrant = 1;
         blue_marker_radius = 0.08; % Acceptable distance to the goal point
+        MaxRo = 1; %unit circle radius
+        PenaltyForOutOfLimits = -10;
+        PenaltyForNotReachingGoal = -1;%penalty for not reaching the goal for every try
+        StepThreshold = 10;% the number of steps to fail the episode
+
+
 
     end
 
     properties
-        State = {[0 0],[0 0],zeros(40,8)}; % Zeros(1800,8)}; % Goal_location, act_location, 8 channel EMG input
+        State = {[0 0],[0 0],zeros(8,40)}; % Zeros(1800,8)}; % Goal_location(cartesian), act_location(cartesian), 8 channel EMG input
     end
 
     properties(Access = protected)
@@ -33,24 +40,15 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         % Change class name and constructor name accordingly
         function this = MyoEnvironment()
             % Initialize Observation settings
-            ObservationInfo = rlNumericSpec([40 8]);
+            ObservationInfo = rlNumericSpec([8 40]);
             ObservationInfo.Name = 'Observations';
             ObservationInfo.Description = 'EMG epoch 8 channels';
 
             % Initialize Action settings
-            theta_act = linspace(0,359,360);
-            acts = {[0 0]};
-            for i= 1:4
-                for j = 1:360
-                    acts(length(acts)+1) = {[theta_act(j) i*0.25]};
-                    %acts_vect(length(acts_vec)+1) =
-                end
-            end
-
-
-            ActionInfo = rlFiniteSetSpec(acts);
+            numAct = 2;
+            ActionInfo = rlNumericSpec([numAct 1], LowerLimit = -1 , UpperLimit = 1);
             ActionInfo.Name = 'Action';
-            ActionInfo.Description = 'theta,ro';
+            ActionInfo.Description = 'X and Y cartesin values';
 
 
             % The following line implements built-in functions of RL env
@@ -64,16 +62,13 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         function [Observation,Reward,IsDone,LoggedSignals] = step(this,Action)
             LoggedSignals = [];
 
-
-            Observation = this.State{3};
+                
+            Observation = this.State{3};% the emg sample
             goal_location = this.State{1};
-            goal_theta = goal_location(2);
-            goal_ro = goal_location(1);
-            [goal_x,goal_y] = pol2cart(goal_theta,goal_ro);
-            act_location = getActionLocation(this,Action);
-            act_theta = act_location(2);
-            act_ro = act_location(1);
-            [act_x,act_y] = pol2cart(act_theta,act_ro);
+            goal_X = goal_location(1);
+            goal_Y = goal_location(2);
+            act_X = act_location(1);
+            act_Y = act_location(2);
 
             % Update system states
             this.State = {goal_location,act_location,Observation};
@@ -100,19 +95,10 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
 
         % Reset environment to initial state and output initial observation
         function InitialObservation = reset(this)
-
-
-
-            % if i < this.index_amount
-            %     goal_location = getGoalLocation(this,i);
-            %     epoch = getEMG(this,i);
-            %     this.counter = i + 1;
-            % end
-
-            InitialObservation = get_emg_info;
-            act_location = this.State{2};
-            this.State = {goal_location, act_location, InitialObservation};
-
+            curser_location = [0 0];
+            emgSample = zeros(8,40);
+            goal_location = getGoalLocation
+            this.State = {, curser_location, emgSample};
             notifyEnvUpdated(this);
 
         end
@@ -120,42 +106,20 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
     %% Optional Methods (set methods' attributes accordingly)
     methods
         %Helper methods to create the environment
-        %Discrete force 1 or 2
-        function action_location = getActionLocation(this,Action)
-            %             if ~ismember(Action,this.ActionInfo.Elements)
-            %                 error('Action is not valid');
-            %             end
-            Action_theta = Action(2) * pi/180;
-            Action_ro = Action(1) * 0.25;
-            action_location = [Action_ro,Action_theta];
+
+        function goal_location = getGoalLocation(this)
+            goal_location = -1 + 2 * rand(1,2);
+            %this.State(1) = goal_location;
         end
 
-        function goal_location = getGoalLocation(this,i)
-            data_location = load('rebeccaS1T1L.mat');
-            location = data_location.location;
-            goal_location_theta = location(i,2);
-            goal_location_ro = location(i,1);
-            goal_location = [goal_location_ro,goal_location_theta];
-        end
-
-        function index = getIndex(this,i)
-            data_index = load('rebeccaS1T1I.mat');
-            index = data_index.index;
-            index = index(i);
-        end
-        % function epoch = getEMG(this,i)
-        %     index = getIndex(this,i);
-        %     data_whole_EMG = load('rebeccaS1T1d.mat');
-        %     whole_EMG = data_whole_EMG.e;
-        %     epoch = whole_EMG(index:index+1799,1:8);
-        % end
-        function emg_sample = get_emg_info
+        function emg_sample = getEmgInfo(this)
             if exist('mm') == 0
                 mm = MyoMex();
                 m1 = mm.myoData;
             end
             e = m1.emg_log;
             emg_sample = e(end-39:end,:);
+            %this.State(3) = emg_sample;
         end
 
 
@@ -169,16 +133,8 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             ha.XLim = [-1 1];
             ha.YLim = [-1 1];
             hold(ha,'on');
-
-            % pax = polaraxes;
-            % pax.RLim = [0 1.25];
-            % pax = gca(this.Figure);
-            % hold(pax,'on');
-            % Update the visualization
             envUpdatedCallback(this)
         end
-        % % %
-        %
     end
     %
     methods (Access = protected)
@@ -189,23 +145,19 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
                 % Set visualization figure as the current figure
                 ha = gca(this.Figure);
                 % draw the unit circle
-                th_red_marker = linspace(0,2*pi,30);
-                [x_unit,y_unit] = pol2cart(th_red_marker,1);
-
-
+                th_red_marker = linspace(0,2*pi,60);
+                [x_unit,y_unit] = pol2cart(th_red_marker,this.MaxRo);
                 % draw the goal position area, target point and the
                 % acceptable radius
-                th_blue_marker = linspace(0,2*pi,60);
-                [x_goal,y_goal] = pol2cart(th_blue_marker,this.blue_marker_radius);
-                goal_center = this.state{1};
-                theta_c = goal_center(2);
-                ro_c = goal_center(1);
-                [xc,yc] = pol2cart(theta_c,ro_c);
-                [th_b,r_b] = cart2pol(x_goal + xc,y_goal + yc);
-                polarplot(pax,th_b,r_b,'LineWidth',2);
+                th_blue_marker = linspace(0,2*pi,30);
+                [x_blue,y_blue] = pol2cart(th_blue_marker,this.blue_marker_radius);
+                goal_center = getGoalLocation(this);
+                xc_goal = goal_center(1);
+                yc_goal = goal_center(2);
+                x_goal = x_blue + xc_goal;
+                y_goal = y_blue + yc_goal;
+                % Action center
                 action_center = this.state{2};
-                polarplot(pax, action_center(2),action_center(1),'.','MarkerSize',50,"color","r");
-
                 % Refresh rendering in the figure window
                 drawnow();
             end
