@@ -3,9 +3,6 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
     properties
         % Specify and initialize environment's necessary properties
         % Max radius of the area
-         
-        %sdk_path = 'C:\myo-sdk-win-0.9.0';
-        %build_myo_mex('C:\myo-sdk-win-0.9.0');
 
         %myoStreaming = m1.isStreaming;
         test_subject = 'Rebecca'
@@ -20,7 +17,7 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         PenaltyForOutOfLimits = -10;
         PenaltyForNotReachingGoal = -1;%penalty for not reaching the goal for every try
         StepThreshold = 10;% the number of steps to fail the episode
-        
+
     end
 
     properties
@@ -31,6 +28,8 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         % Initialize internal flag to indicate episode termination
         IsDone = false;
 
+        % handle to Myo
+        Myo;
         % handle to figure
         Figure;
     end
@@ -50,13 +49,15 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             ActionInfo = rlNumericSpec([numAct 1], LowerLimit = -1 , UpperLimit = 1);
             ActionInfo.Name = 'Action';
             ActionInfo.Description = 'X and Y cartesin values';
-            
-            mm = MyoMex();
+
+
+            mm = MyoMex();  
             m1 = mm.myoData();
+            Myo = @m1;
             
 
             % The following line implements built-in functions of RL env
-            this = this@rl.env.MATLABEnvironment(ObservationInfo,ActionInfo,m1);
+            this = this@rl.env.MATLABEnvironment(ObservationInfo,ActionInfo);
 
             %updateActionInfo(this);
         end
@@ -67,16 +68,16 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             LoggedSignals = [];
 
             %get action
-            action_location = getActionPred(this,Action)
-            Observation = this.State{3};% the emg sample
+            action_location = Action;
+            %Observation = this.State{3};% the emg sample
             goal_location = this.State{1};
             goal_X = goal_location(1);
             goal_Y = goal_location(2);
-            act_X = act_location(1);
-            act_Y = act_location(2);
+            act_X = action_location(1);
+            act_Y = action_location(2);
 
             % Update system states
-            this.State = {goal_location, act_location, Observation};
+            %this.State = {goal_location, act_location, Observation};
 
             %reward
             R = abs(2 - sqrt((act_x - goal_x)^2 + (act_y - goal_y)^2));
@@ -112,23 +113,20 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
     %% Optional Methods (set methods' attributes accordingly)
     methods
         %Helper methods to create the environment
+        function EMGSamples = getEmgSample(this)
+            this.Myo = MyoMex();
+            m = this.Myo;
+            e = m.myoData();
+            figure(1);plot(e);
+            %EMGSamples = e(end-39:end,:);
+            
+        end
 
         function goal_location = getGoalLocation(this)
             goal_location = -1 + 2 * rand(1,2);
             %this.State(1) = goal_location;
         end
 
-        function emg_sample = getEmgInfo(this)
-            if exist(m1)
-
-                e = m1.emg_log();
-            end
-
-
-           
-            emg_sample = m1.emg_log(end-39:end,:);
-            this.State(3) = emg_sample;
-       end
 
         function plot(this)
             % Initiate the visualization
