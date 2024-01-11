@@ -50,10 +50,10 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             ActionInfo.Name = 'Action';
             ActionInfo.Description = 'X and Y cartesin values';
 
-
-            mm = MyoMex();  
-            m1 = mm.myoData();
-            Myo = @m1;
+            %Initialize myo
+            % mm = MyoMex();  
+            % m1 = mm.myoData();
+            %Myo = @m1;
             
 
             % The following line implements built-in functions of RL env
@@ -114,12 +114,15 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
     methods
         %Helper methods to create the environment
         function EMGSamples = getEmgSample(this)
+            reb = [];
             this.Myo = MyoMex();
             m = this.Myo;
             e = m.myoData();
-            figure(1);plot(e);
+            pause(0.25)
+            reb = e.emg_log;
+            figure(1);plot(reb(end-39:end,:));
             %EMGSamples = e(end-39:end,:);
-            
+            delete(m);
         end
 
         function goal_location = getGoalLocation(this)
@@ -134,8 +137,8 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             ha = gca(this.figure);
             ha.XLimMode = 'manual';
             ha.YLimMode = 'manual';
-            ha.XLim = [-1 1];
-            ha.YLim = [-1 1];
+            ha.XLim = [-1.5 1.5];
+            ha.YLim = [-1.5 1.5];
             hold(ha,'on');
             envUpdatedCallback(this)
         end
@@ -151,15 +154,16 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
                 % draw the unit circle
                 th_red_marker = linspace(0,2*pi,60);
                 [x_unit,y_unit] = pol2cart(th_red_marker,this.MaxRo);
+                unitcircle = 
                 % draw the goal position area, target point and the
                 % acceptable radius
-                th_blue_marker = linspace(0,2*pi,30);
-                [x_blue,y_blue] = pol2cart(th_blue_marker,this.blue_marker_radius);
-                goal_center = getGoalLocation(this);
-                xc_goal = goal_center(1);
-                yc_goal = goal_center(2);
-                x_goal = x_blue + xc_goal;
-                y_goal = y_blue + yc_goal;
+                % % th_blue_marker = linspace(0,2*pi,30);
+                % % [x_blue,y_blue] = pol2cart(th_blue_marker,this.blue_marker_radius);
+                % % goal_center = getGoalLocation(this);
+                % % xc_goal = goal_center(1);
+                % % yc_goal = goal_center(2);
+                % % x_goal = x_blue + xc_goal;
+                % % y_goal = y_blue + yc_goal;
                 % Action center
                 action_center = this.state{2};
                 % Refresh rendering in the figure window
