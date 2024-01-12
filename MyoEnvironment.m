@@ -113,17 +113,17 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
     %% Optional Methods (set methods' attributes accordingly)
     methods
         %Helper methods to create the environment
-        function EMGSamples = getEmgSample(this)
-            reb = [];
-            this.Myo = MyoMex();
-            m = this.Myo;
-            e = m.myoData();
-            pause(0.25)
-            reb = e.emg_log;
-            figure(1);plot(reb(end-39:end,:));
-            %EMGSamples = e(end-39:end,:);
-            delete(m);
-        end
+        % function EMGSamples = getEmgSample(this)
+        %     reb = [];
+        %     this.Myo = MyoMex();
+        %     m = this.Myo;
+        %     e = m.myoData();
+        %     pause(0.25)
+        %     reb = e.emg_log;
+        %     figure(1);plot(reb(end-39:end,:));
+        %     %EMGSamples = e(end-39:end,:);
+        %     delete(m);
+        % end
 
         function goal_location = getGoalLocation(this)
             goal_location = -1 + 2 * rand(1,2);
@@ -134,11 +134,11 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         function plot(this)
             % Initiate the visualization
             this.Figure = figure('Visible','on','HandleVisibility','off');
-            ha = gca(this.figure);
+            ha = gca(this.Figure);
             ha.XLimMode = 'manual';
             ha.YLimMode = 'manual';
-            ha.XLim = [-1.5 1.5];
-            ha.YLim = [-1.5 1.5];
+            ha.XLim = [-1.1 1.1];
+            ha.YLim = [-1.1 1.1];
             hold(ha,'on');
             envUpdatedCallback(this)
         end
@@ -154,7 +154,15 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
                 % draw the unit circle
                 th_red_marker = linspace(0,2*pi,60);
                 [x_unit,y_unit] = pol2cart(th_red_marker,this.MaxRo);
-                unitcircle = 
+                unitcircle = plot(ha,x_unit,y_unit)
+                unitcircle.LineWidth  = 2;
+                % draw y = 0 
+                xLine_marker = linspace(-1.1,1.1,5);
+
+                xLine = plot(ha,xLine_marker,zeros(5));
+                %xLine.MarkerFaceColor = "black",
+                xLine.LineWidth = 4;
+
                 % draw the goal position area, target point and the
                 % acceptable radius
                 % % th_blue_marker = linspace(0,2*pi,30);
