@@ -50,12 +50,6 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             ActionInfo.Name = 'Action';
             ActionInfo.Description = 'X and Y cartesin values';
 
-            %Initialize myo
-            % mm = MyoMex();  
-            % m1 = mm.myoData();
-            %Myo = @m1;
-            
-
             % The following line implements built-in functions of RL env
             this = this@rl.env.MATLABEnvironment(ObservationInfo,ActionInfo);
 
@@ -95,7 +89,6 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             % Check terminal condition
             IsDone = R <= this.blue_marker_radius || R > 2;
             this.IsDone = IsDone;
-
             notifyEnvUpdated(this);
         end
 
@@ -113,21 +106,25 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
     %% Optional Methods (set methods' attributes accordingly)
     methods
         %Helper methods to create the environment
-        % function EMGSamples = getEmgSample(this)
-        %     reb = [];
-        %     this.Myo = MyoMex();
-        %     m = this.Myo;
-        %     e = m.myoData();
-        %     pause(0.25)
-        %     reb = e.emg_log;
-        %     figure(1);plot(reb(end-39:end,:));
-        %     %EMGSamples = e(end-39:end,:);
-        %     delete(m);
-        % end
+        function EMGSamples = getEmgSample(this)
+            emg = [];
+            this.Myo = MyoMex();
+            m = this.Myo;
+            e = m.myoData();
+            pause(0.3)
+            emg = e.emg_log;
+            %figure(1);plot(reb(end-39:end,:));
+            EMGSamples = emg(end-39:end,:);
+            delete(m);
+        end
 
         function goal_location = getGoalLocation(this)
-            goal_location = -1 + 2 * rand(1,2);
-            %this.State(1) = goal_location;
+            rand_goal_location = 1.1;
+            while rand_goal_location > 1
+                rand_goal = -1 + 2 * rand(1,2);
+                rand_goal_location = sqrt(rand_goal(1)^2+rand_goal(2)^2)
+            end
+            goal_location = rand_goal;
         end
 
 
@@ -137,8 +134,8 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             ha = gca(this.Figure);
             ha.XLimMode = 'manual';
             ha.YLimMode = 'manual';
-            ha.XLim = [-1.1 1.1];
-            ha.YLim = [-1.1 1.1];
+            ha.XLim = [-1.5 1.5];
+            ha.YLim = [-1.5 1.5];
             hold(ha,'on');
             envUpdatedCallback(this)
         end
@@ -154,26 +151,28 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
                 % draw the unit circle
                 th_red_marker = linspace(0,2*pi,60);
                 [x_unit,y_unit] = pol2cart(th_red_marker,this.MaxRo);
-                unitcircle = plot(ha,x_unit,y_unit)
+                unitcircle = plot(ha,x_unit,y_unit,"Color",'r','LineStyle','--');
                 unitcircle.LineWidth  = 2;
-                % draw y = 0 
+                % draw x and y axes
                 xLine_marker = linspace(-1.1,1.1,5);
-
-                xLine = plot(ha,xLine_marker,zeros(5));
-                %xLine.MarkerFaceColor = "black",
-                xLine.LineWidth = 4;
-
+                xAxis = plot(ha,xLine_marker,zeros(5),"Color",'k',"LineWidth",2);
+                yAxis = plot(ha,zeros(5),xLine_marker,"Color",'k',"LineWidth",2);
                 % draw the goal position area, target point and the
                 % acceptable radius
-                % % th_blue_marker = linspace(0,2*pi,30);
-                % % [x_blue,y_blue] = pol2cart(th_blue_marker,this.blue_marker_radius);
-                % % goal_center = getGoalLocation(this);
-                % % xc_goal = goal_center(1);
-                % % yc_goal = goal_center(2);
-                % % x_goal = x_blue + xc_goal;
-                % % y_goal = y_blue + yc_goal;
-                % Action center
-                action_center = this.state{2};
+                th_blue_marker = linspace(0,2*pi,30);
+                [x_blue,y_blue] = pol2cart(th_blue_marker,this.blue_marker_radius);
+                goal_center = getGoalLocation(this);
+                xc_goal = goal_center(1);
+                yc_goal = goal_center(2);
+                x_goal = x_blue + xc_goal;
+                y_goal = y_blue + yc_goal;
+                goalArea = plot(ha,x_goal,y_goal,"Color",'b');
+               
+                action_center = this.State{2};
+                x_action = 0.5;%action_center(1);
+                y_action = 0.6;%action_center(2);
+
+                action_point = scatter(ha,x_action,y_action,"green","g",'Marker','*',"LineWidth",5);
                 % Refresh rendering in the figure window
                 drawnow();
             end
