@@ -108,23 +108,50 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
     %% Optional Methods (set methods' attributes accordingly)
     methods
         %Helper methods to create the environment
-        function EMGSamples = getEmgSample(this)
-            emg = [];
+        function myoIsHere = initMyo(this)
+            % emg = []
             this.Myo = MyoMex();
             m = this.Myo;
-            e = m.myoData();
-            pause(0.3)
-            emg = e.emg_log;
-            %figure(1);plot(reb(end-39:end,:));
-            EMGSamples = abs(emg(end-39:end,:))
-            delete(m);
+            %e = m.myoData();
+            pause(1);
+            %emg = e.emg_log;
+            myoIsHere = m;
         end
-        function emgPwer = getEmgPower(this)
-            sigTemp = getEmgSample(this);
-            meanF = signalTimeFeatureExtractor("Mean", true, 'SampleRate', this.Fs);
-            meanFDS = arrayDatastore(sigTemp,"IterationDimension",2);
-            meanFDS = transform(meanFDS,@(x)meanF.extract(x{:}));
-            meanFeatures = readall(meanFDS,"UseParallel",true)       
+   
+        function EMGSamples = getEmgSample(this,m)
+            e = m.myoData();
+            if e.isStreaming == 1
+                emg = e.emg_log;
+                %figure(1);plot(reb(end-39:end,:));
+                EMGSamples = abs(emg(end-39:end,:));
+                disp('here')
+            end
+            %delete(m);
+            function clearMyo(m)
+                ea = m.myoData();
+                if ea.isStreaming == 1
+                    delete(m);
+                end
+            end
+
+        end
+        function emgPower = getEmgPower(this)
+            m = initMyo(this);
+            this.EmgDisplay = uifigure('Visible','on','HandleVisibility','off');
+            emgCg = uigauge(this.EmgDisplay,"Position",[100 60 350 350]);
+            while 2>1
+                sigTemp = getEmgSample(this,m);
+                meanF = signalTimeFeatureExtractor("Mean", true, 'SampleRate', this.Fs);
+                meanFDS = arrayDatastore(sigTemp,"IterationDimension",2);
+                meanFDS = transform(meanFDS,@(x)meanF.extract(x{:}));
+                meanFeatures = readall(meanFDS,"UseParallel",true);
+                emgPower = max(meanFeatures);
+                emgCg.Value = 100 * emgPower;
+                % Refresh rendering in the figure window
+                drawnow();
+                pause(0.3);
+            end
+            clearMyo(m);
         end
 
         function goal_location = getGoalLocation(this)
@@ -185,12 +212,7 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
                 emgSample = 90;%*this.getEmgSample;
                 action_point = scatter(ha,x_action,y_action,"green","g",'Marker','*',"LineWidth",5);
 
-                this.EmgDisplay = uifigure('Visible','on','HandleVisibility','off');
-                emgCg = uigauge(this.EmgDisplay,"Position",[100 60 350 350]);
-                emgPower =  this.getEmgSample;
-                emgCg.Value = 100 * emgPower(1,1);
-                % Refresh rendering in the figure window
-                drawnow();
+
             end
         end
     end

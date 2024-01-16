@@ -8,6 +8,7 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         test_subject = 'Rebecca'
         Reward = [];
         sampleTime = 0.25;
+        Fs = 200; %Hz samplefrequency
         % Index_amount = 20;
         % Counter = 1;
         RewardForReachingGoal = 10;
@@ -32,6 +33,7 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         Myo;
         % handle to figure
         Figure;
+        EmgDisplay;
     end
 
     %% Necessary Methods
@@ -94,8 +96,8 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
 
         % Reset environment to initial state and output initial observation
         function InitialObservation = reset(this)
-            action_location0 = [0 0];
-            emgSample = getEmgInfo(this);
+            action_location0 = [0 0];% the curser is located at the origin
+            %emgSample = getEmgInfo(this);
             goal_location = getGoalLocation(this);
             InitialObservation = {goal_location, action_location0, emgSample};
             this.State = InitialObservation;
@@ -106,27 +108,60 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
     %% Optional Methods (set methods' attributes accordingly)
     methods
         %Helper methods to create the environment
-        function EMGSamples = getEmgSample(this)
-            emg = [];
+        function myoIsHere = initMyo(this)
+            % emg = []
             this.Myo = MyoMex();
             m = this.Myo;
+            %e = m.myoData();
+            pause(1);
+            %emg = e.emg_log;
+            myoIsHere = m;
+        end
+   
+        function EMGSamples = getEmgSample(this,m)
             e = m.myoData();
-            pause(0.3)
-            emg = e.emg_log;
-            %figure(1);plot(reb(end-39:end,:));
-            EMGSamples = emg(end-39:end,:);
-            delete(m);
+            if e.isStreaming == 1
+                emg = e.emg_log;
+                %figure(1);plot(reb(end-39:end,:));
+                EMGSamples = abs(emg(end-39:end,:));
+                disp('here')
+            end
+            %delete(m);
+            function clearMyo(m)
+                ea = m.myoData();
+                if ea.isStreaming == 1
+                    delete(m);
+                end
+            end
+
+        end
+        function emgPower = getEmgPower(this)
+            m = initMyo(this);
+            this.EmgDisplay = uifigure('Visible','on','HandleVisibility','off');
+            emgCg = uigauge(this.EmgDisplay,"Position",[100 60 350 350]);
+            while 2>1
+                sigTemp = getEmgSample(this,m);
+                meanF = signalTimeFeatureExtractor("Mean", true, 'SampleRate', this.Fs);
+                meanFDS = arrayDatastore(sigTemp,"IterationDimension",2);
+                meanFDS = transform(meanFDS,@(x)meanF.extract(x{:}));
+                meanFeatures = readall(meanFDS,"UseParallel",true);
+                emgPower = max(meanFeatures);
+                emgCg.Value = 100 * emgPower;
+                % Refresh rendering in the figure window
+                drawnow();
+                pause(0.3);
+            end
+            clearMyo(m);
         end
 
         function goal_location = getGoalLocation(this)
             rand_goal_location = 1.1;
             while rand_goal_location > 1
                 rand_goal = -1 + 2 * rand(1,2);
-                rand_goal_location = sqrt(rand_goal(1)^2+rand_goal(2)^2)
+                rand_goal_location = sqrt(rand_goal(1)^2+rand_goal(2)^2);
             end
             goal_location = rand_goal;
         end
-
 
         function plot(this)
             % Initiate the visualization
@@ -137,6 +172,9 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             ha.XLim = [-1.5 1.5];
             ha.YLim = [-1.5 1.5];
             hold(ha,'on');
+            % Initiate the emg display
+
+
             envUpdatedCallback(this)
         end
     end
@@ -167,14 +205,14 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
                 x_goal = x_blue + xc_goal;
                 y_goal = y_blue + yc_goal;
                 goalArea = plot(ha,x_goal,y_goal,"Color",'b');
-               
+
                 action_center = this.State{2};
                 x_action = 0.5;%action_center(1);
                 y_action = 0.6;%action_center(2);
-
+                emgSample = 90;%*this.getEmgSample;
                 action_point = scatter(ha,x_action,y_action,"green","g",'Marker','*',"LineWidth",5);
-                % Refresh rendering in the figure window
-                drawnow();
+
+
             end
         end
     end
