@@ -22,8 +22,8 @@ prompt = "should we proceed?[y/n]";
 reply = input(prompt,'s');
 emg_check(name)
 if reply == 'y'
-    dataConvertor(name, session);
-    disp("Thank you for your time/Rebecca.")
+    %dataConvertor(name, session);
+    disp("Thank you for your time.")
 else
     disp("Sorry your samples are not valid,please try again.")
 end

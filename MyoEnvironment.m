@@ -18,12 +18,13 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         PenaltyForOutOfLimits = -10;
         PenaltyForNotReachingGoal = -1;%penalty for not reaching the goal for every try
         StepThreshold = 10;% the number of steps to fail the episode
-
     end
 
     properties
-        State = {[0 0],[0 0],zeros(8,40)}; % Zeros(1800,8)}; % Goal_location(cartesian), act_location(cartesian), 8 channel EMG input
+        State = {[0 0],[0 0],zeros(40,40)}; % Zeros(1800,8)}; % Goal_location(cartesian), act_location(cartesian), 8 channel EMG input
     end
+
+
 
     properties(Access = protected)
         % Initialize internal flag to indicate episode termination
@@ -42,7 +43,7 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         % Change class name and constructor name accordingly
         function this = MyoEnvironment()
             % Initialize Observation settings
-            ObservationInfo = rlNumericSpec([8 40]);
+            ObservationInfo = rlNumericSpec([40 40]);
             ObservationInfo.Name = 'Observations';
             ObservationInfo.Description = 'EMG epoch 8 channels';
 
@@ -86,8 +87,6 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             end
 
             this.Reward = Reward;
-
-
             % Check terminal condition
             IsDone = R <= this.blue_marker_radius || R > 2;
             this.IsDone = IsDone;
@@ -102,7 +101,6 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             InitialObservation = {goal_location, action_location0, emgSample};
             this.State = InitialObservation;
             notifyEnvUpdated(this);
-
         end
     end
     %% Optional Methods (set methods' attributes accordingly)
@@ -133,22 +131,29 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
                     delete(m);
                 end
             end
-
         end
-        function emgPower = getEmgPower(this)
+        function emgsample = getEmgPower(this)
             m = initMyo(this);
             this.EmgDisplay = uifigure('Visible','on','HandleVisibility','off');
             emgCg = uigauge(this.EmgDisplay,"Position",[100 60 350 350]);
-            while 2>1
+            while 1
                 sigTemp = getEmgSample(this,m);
                 meanF = signalTimeFeatureExtractor("Mean", true, 'SampleRate', this.Fs);
                 meanFDS = arrayDatastore(sigTemp,"IterationDimension",2);
                 meanFDS = transform(meanFDS,@(x)meanF.extract(x{:}));
                 meanFeatures = readall(meanFDS,"UseParallel",true);
-                emgPower = max(meanFeatures);
+                emgPower= max(meanFeatures);
                 emgCg.Value = 100 * emgPower;
                 % Refresh rendering in the figure window
                 drawnow();
+                if emgPower > 8
+                    sampleIsTaken = sigTemp;
+                    img_resize = repelem(sampleIsTaken,1,5);
+                    emgsample = img_resize;
+                    imwrite(img_resize,'sample.jpeg');
+                    imshow('sample.jpeg');
+                    break
+                end
                 pause(0.3);
             end
             clearMyo(m);

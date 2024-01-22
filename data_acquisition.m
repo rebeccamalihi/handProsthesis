@@ -8,7 +8,10 @@ function data_acquisition(name,session,m1)
 %% variables
 
 data = {};
-y = m1.isStreaming;
+gestureNum = 10; %number of time for each guster to be performed
+pTime = 5; %seconds for each gesture
+% EmgDisplay = uifigure('Visible','on','HandleVisibility','off');
+% emgCg = uigauge(EmgDisplay,"Position",[100 60 350 350]);
 figure
 pax = polaraxes;
 pax.RLim = [0 1.25]
@@ -27,14 +30,17 @@ if ~exist(folder_name,'dir')
     mkdir(folder_name);
 end
 %%
+
 for k = 1:4 %each quadrant from pi/2 to 2pi is in the que
-    e = m1.emg_log;
-    %index(length(index)+1) = length(e);
     theta = k * pi/2;
     sample.label = string(rad2deg(theta)); %make the label for each signal junk
+    % subFolderAddress = fullfile(name + '\' + sample.label);
+    % if ~exist(subFolderAddress,'dir')
+    %     mkdir(subFolderAddress);
+    % end
     ro = 1;
     ro_c = linspace(0,ro,20); %ro of centre
-    for f = 1:3 %3
+    for f = 1:gestureNum % times each gesture is performed
         trial_number = f; %number of trials in each session
         for i = 1:20
             polarplot(theta,ro_c(20),'.','MarkerSize',50,'Color','r');
@@ -47,10 +53,11 @@ for k = 1:4 %each quadrant from pi/2 to 2pi is in the que
         end
         %e = m1.emg_log;
         %index2(length(index2)+1) = length(e);%start the recording
-        pause(60);
+
+        pause(pTime);
         e =m1.emg_log;
-        sample.signal = e(end-599:end,:);
-        data{end+1} = sample;% stores the three second long signal with labels
+        sample.signal = e(end-(200*pTime-1):end,:);
+        data{end+1} = sample;% stores the pTime second long signal with labels
 
         %index_end(length(index_end)+1) = length(e);%end of recording
         for j = 1:20
@@ -69,6 +76,28 @@ m1.stopStreaming();
 toc
 save(fileName,"data");
 end
-
+        %     while 1
+        %         sigTemp = getEmgSample(this,m);
+        %         meanF = signalTimeFeatureExtractor("Mean", true, 'SampleRate', this.Fs);
+        %         meanFDS = arrayDatastore(sigTemp,"IterationDimension",2);
+        %         meanFDS = transform(meanFDS,@(x)meanF.extract(x{:}));
+        %         meanFeatures = readall(meanFDS,"UseParallel",true);
+        %         emgPower= max(meanFeatures);
+        %         emgCg.Value = 100 * emgPower;
+        %         Refresh rendering in the figure window
+        %         drawnow();
+        %         if emgPower > 8
+        %             sampleIsTaken = sigTemp;
+        %             img_resize = repelem(sampleIsTaken,1,5);
+        %             emgsample = img_resize;
+        %             imwrite(img_resize,'sample.jpeg');
+        %             imshow('sample.jpeg');
+        %             break
+        %         end
+        %         pause(0.3);
+        %     end
+        %     clearMyo(m);
+        % end
+        % 
 
 

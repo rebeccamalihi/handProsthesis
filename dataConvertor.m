@@ -1,7 +1,7 @@
 %function dataConvertor(name,session)
 %%this function is created to convert the raw signals to images with size of 40*40
-session = 5; 
-name = 'Rebecka';
+session = 1; 
+name = "Reb";
 folderName = fullfile("\Users\lab-admin\Desktop\Rebecca\" + name);
 fds = fileDatastore(folderName, 'FileExtensions', '.mat','ReadFcn', @importdata );
 %data = read(fds);
@@ -14,10 +14,15 @@ data = list{session};
 %         data{12*(i - 1)+ j} = a{j};
 %     end
 % end
-mkdir Rebecka\ 90
-mkdir Rebecka\ 180
-mkdir Rebecka\ 270
-mkdir Rebecka\ 360
+for i =1:4
+    subFolderName = int2str(i * 90);
+    subFolderAddress = fullfile(name + '\' + subFolderName);
+    mkdir(subFolderAddress);
+end
+% mkdir Reb\ 90
+% mkdir Reb\ 180
+% mkdir Reb\ 270
+% mkdir Reb\ 360
 for i = 1:length(data)
     sample = data{i};
     for j = 1:15
