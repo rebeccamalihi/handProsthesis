@@ -13,16 +13,17 @@ session = input(prompt,'s');
 if isempty(name)
     name = "Rebecca";
 end
-% mm = MyoMex();
-% m1 = mm.myoData;
+mm = MyoMex();
+m1 = mm.myoData;
 
 %% main program
-data_acquisition(name, session, m1);
+data = data_acquisition(name, session,m1);
+emg_display(data);
 prompt = "should we proceed?[y/n]";
 reply = input(prompt,'s');
 emg_check(name)
 if reply == 'y'
-    %dataConvertor(name, session);
+    dataConvertor(name);
     disp("Thank you for your time.")
 else
     disp("Sorry your samples are not valid,please try again.")

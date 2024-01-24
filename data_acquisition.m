@@ -1,5 +1,5 @@
 
-function data_acquisition(name,session,m1)
+function data = data_acquisition(name,session,m1)
 %this function is desinged for only 4 maximum position sample aquisition.it
 %includes three trials per position and each trial lasts for 3sec. 'name'
 %of the subject, number of the current 'session' and the m1 object must be
@@ -8,7 +8,7 @@ function data_acquisition(name,session,m1)
 %% variables
 
 data = {};
-gestureNum = 10; %number of time for each guster to be performed
+gestureNum = 5; %number of time for each guster to be performed
 pTime = 5; %seconds for each gesture
 % EmgDisplay = uifigure('Visible','on','HandleVisibility','off');
 % emgCg = uigauge(EmgDisplay,"Position",[100 60 350 350]);
@@ -76,28 +76,5 @@ m1.stopStreaming();
 toc
 save(fileName,"data");
 end
-        %     while 1
-        %         sigTemp = getEmgSample(this,m);
-        %         meanF = signalTimeFeatureExtractor("Mean", true, 'SampleRate', this.Fs);
-        %         meanFDS = arrayDatastore(sigTemp,"IterationDimension",2);
-        %         meanFDS = transform(meanFDS,@(x)meanF.extract(x{:}));
-        %         meanFeatures = readall(meanFDS,"UseParallel",true);
-        %         emgPower= max(meanFeatures);
-        %         emgCg.Value = 100 * emgPower;
-        %         Refresh rendering in the figure window
-        %         drawnow();
-        %         if emgPower > 8
-        %             sampleIsTaken = sigTemp;
-        %             img_resize = repelem(sampleIsTaken,1,5);
-        %             emgsample = img_resize;
-        %             imwrite(img_resize,'sample.jpeg');
-        %             imshow('sample.jpeg');
-        %             break
-        %         end
-        %         pause(0.3);
-        %     end
-        %     clearMyo(m);
-        % end
-        % 
 
 
