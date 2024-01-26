@@ -16,7 +16,6 @@ YTrain = {};
 for k =1:length(imdsTrain.Labels)
     filename = imdsTrain.Files{k};
     imgSamples{k} = filename;
-
 end
 imgSamples = imgSamples';
 

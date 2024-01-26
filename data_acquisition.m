@@ -25,6 +25,7 @@ index = [1];
 index2 = [1];
 index_end = [1];
 folder_name = fullfile("\Users\lab-admin\Desktop\Rebecca\" + name);
+
 %% %prepare directory to save the images
 if ~exist(folder_name,'dir')
     mkdir(folder_name);
