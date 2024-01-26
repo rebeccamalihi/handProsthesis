@@ -19,7 +19,6 @@ for k =1:length(imdsTrain.Labels)
 end
 imgSamples = imgSamples';
 
-
 %% Validation dataset
 imgValSamples = {};
 for j =1:length(imdsVal.Labels)

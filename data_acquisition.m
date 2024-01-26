@@ -14,7 +14,7 @@ pTime = 5; %seconds for each gesture
 % emgCg = uigauge(EmgDisplay,"Position",[100 60 350 350]);
 figure
 pax = polaraxes;
-pax.RLim = [0 1.25]
+pax.RLim = [0 1.25];
 polarplot(0,0,'.','MarkerSize',50,'Color','r');
 pause(3); %gives time to the subject to be prepared
 y = m1.isStreaming();
