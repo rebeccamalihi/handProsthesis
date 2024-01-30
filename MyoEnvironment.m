@@ -19,13 +19,9 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         PenaltyForNotReachingGoal = -1;%penalty for not reaching the goal for every try
         StepThreshold = 10;% the number of steps to fail the episode
     end
-
     properties
         State = {[0 0],[0 0],zeros(40,40)}; % Zeros(1800,8)}; % Goal_location(cartesian), act_location(cartesian), 8 channel EMG input
     end
-
-
-
     properties(Access = protected)
         % Initialize internal flag to indicate episode termination
         IsDone = false;

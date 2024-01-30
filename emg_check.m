@@ -1,8 +1,6 @@
-function emg_check(name)
-
+% function data = emg_check(name)
+name= 'Reb';
 folderName = fullfile("\Users\lab-admin\Desktop\Rebecca\" + name);
-fds = fileDatastore(folderName, 'FileExtensions', '.mat','ReadFcn', @importdata );
+fds = fileDatastore(folderName, 'FileExtensions', '.mat','ReadFcn', @importdata);
 data = read(fds);
 
-
-end

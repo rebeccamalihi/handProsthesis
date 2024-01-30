@@ -16,10 +16,8 @@ YTrain = {};
 for k =1:length(imdsTrain.Labels)
     filename = imdsTrain.Files{k};
     imgSamples{k} = filename;
-
 end
 imgSamples = imgSamples';
-
 
 %% Validation dataset
 imgValSamples = {};
@@ -78,41 +76,62 @@ end
 YTest = [x,y];
 %%
 
-layers = [
-    imageInputLayer([40 40 1],"Name","imageinput")
-    convolution2dLayer([5 5],64,"Name","conv","Padding","same")
-    reluLayer("Name","relu")
-    fullyConnectedLayer(10,"Name","fc")
-    reluLayer("Name","relu_1")
-    fullyConnectedLayer(10,"Name","fc_1")
-    reluLayer("Name","relu_2")
-    fullyConnectedLayer(10,"Name","fc_2")
-    reluLayer("Name","relu_3")
-    fullyConnectedLayer(10,"Name","fc_3")
-    reluLayer("Name","relu_4")
-    fullyConnectedLayer(10,"Name","fc_4")
-    reluLayer("Name","relu_5")
-    fullyConnectedLayer(10,"Name","fc_5")
-    reluLayer("Name","relu_6")
-    %fullyConnectedLayer(2,"Name","fc_3")
-    fullyConnectedLayer(2,"Name","fc_6")
-    scalingLayer("Name","scaling")
-    regressionLayer("Name","regressionoutput")];
+% layers = [
+%     imageInputLayer([40 40 1],"Name","imageinput")
+%     convolution2dLayer([5 5],64,"Name","conv","Padding","same")
+%     reluLayer("Name","relu")
+%     fullyConnectedLayer(10,"Name","fc")
+%     reluLayer("Name","relu_1")
+%     fullyConnectedLayer(10,"Name","fc_1")
+%     reluLayer("Name","relu_2")
+%     fullyConnectedLayer(10,"Name","fc_2")
+%     reluLayer("Name","relu_3")
+%     fullyConnectedLayer(10,"Name","fc_3")
+%     reluLayer("Name","relu_4")
+%     fullyConnectedLayer(10,"Name","fc_4")
+%     reluLayer("Name","relu_5")
+%     fullyConnectedLayer(10,"Name","fc_5")
+%     reluLayer("Name","relu_6")
+%     %fullyConnectedLayer(2,"Name","fc_3")
+%     fullyConnectedLayer(2,"Name","fc_6")
+%     scalingLayer("Name","scaling")
+%     regressionLayer("Name","regressionoutput")];
+% tempLayers = [
+%     imageInputLayer([40 40 1],"Name","imageinput")
+%     convolution2dLayer([3 3],16,"Name","conv","Padding","same")
+%     leakyReluLayer(0.01,"Name","leakyrelu")
+%     maxPooling2dLayer(2,"Name","maxunpool")
+%     fullyConnectedLayer(16,"Name","fc")
+%     convolution2dLayer([3 3],16,"Name","conv_1","Padding","same")
+%     leakyReluLayer(0.01,"Name","leakyrelu_1")
+%     maxPooling2dLayer(2,"Name","maxunpool_1")
+%     fullyConnectedLayer(32,"Name","fc_1")
+%     convolution2dLayer([3 3],32,"Name","conv_2","Padding","same")
+%     leakyReluLayer(0.01,"Name","leakyrelu_2")
+%     maxPooling2dLayer(2,"Name","maxunpool_2")
+%     fullyConnectedLayer(32,"Name","fc_2")
+%     convolution2dLayer([3 3],32,"Name","conv_3","Padding","same")
+%     leakyReluLayer(0.01,"Name","leakyrelu_3")
+%     maxPooling2dLayer(2,"Name","maxunpool_3")
+%     fullyConnectedLayer(20,"Name","fc_3")
+%     fullyConnectedLayer(2,"Name","fc_4")
+%     scalingLayer("Name","scaling")
+%     regressionLayer("Name","regressionoutput")];
 
     %ValidationData = {imgValSamples,YValidation}, ...
 options = trainingOptions("adam", ...
-    MaxEpochs = 60, ...
-    MiniBatchSize = 32, ...
+    MaxEpochs = 40, ...
+    MiniBatchSize = 16, ...
     Plots = "training-progress",...
-    InitialLearnRate=0.002,...
+    InitialLearnRate=0.001,...
     Verbose=0,...
     Shuffle="every-epoch",...
-    GradientThreshold=1e4);
+    GradientThreshold=1e2);
 %end
 
 YTrain = YTrain';
 lbltables = table(imgSamples,YTrain);
-net = trainNetwork(lbltables,layers,options);
+net = trainNetwork(lbltables,layers_1,options);
 ypred = predict(net,imdsTest);
 rmse = sqrt(mean((ypred-YTest).^2));
 figure(1);scatter(YTest(:,1),ypred(:,1));
