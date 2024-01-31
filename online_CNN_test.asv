@@ -1,23 +1,24 @@
 %% online check of the performance of the cnn
 i = 0;
-for i = 1:10
-    circle(0,0,1)
-    % e = m1.emg_log;
-    % mat = e(end-39:end,:);
-    % img_resize(:,:,1) = repelem(mat,1,5);
-    % imwrite(img_resize,"sample.jpeg");
-    % YPred = predict(net,img_resize);
-    % plot(YPred);
+Figure = figure('Visible','on','HandleVisibility','off');
+p = gca(Figure);
+for i = 1:1000000
+    th = 0 : pi/50:2*pi;
+    xunit = 1 * cos(th) + 0;
+    yunit = 1 * sin(th) + 0;
+    e = m1.emg_log;
+    mat = abs(e(end-39:end,:));
+    img_resize(:,:,1) = repelem(mat,1,5);
+    imwrite(img_resize,"sample.jpeg");
+    emg_img =imread('sample.jpeg');
+    plot(p.xunit,yunit);
+    hold(p,"on");
+    YPred = predict(net,emg_img);
+    scatter(YPred(1),YPred(2));
+    hold off
     pause(0.5);
-
 end
 
-function h = circle(x,y,r)
-hold on
-th = 0 : pi/50:2*pi;
-xunit = r * cos(th) + x;
-yunit = r * sin(th) + y;
-h = plot(xunit,yunit);
-end
+
 
 
