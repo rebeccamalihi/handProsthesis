@@ -18,4 +18,3 @@ figure(2); subplot(4,1,1); plot(e5); ylim([-1,1]);
 figure(2); subplot(4,1,2); plot(e6); ylim([-1,1]);
 figure(2); subplot(4,1,3); plot(e7); ylim([-1,1]);
 figure(2); subplot(4,1,4); plot(e8); ylim([-1,1]);
-
