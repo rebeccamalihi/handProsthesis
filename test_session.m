@@ -6,7 +6,7 @@ m1.startStreaming();
 
 figure
 pax = polaraxes;
-pax.RLim = [0 1.25]
+pax.RLim = [0 1.25];
 polarplot(0,0,'.','MarkerSize',50,'Color','r');
 pause(3);
 
@@ -16,13 +16,13 @@ rng(0,'twister');
 % test for me rand_theta = round((12-0).*rand(20,1));
 rand_theta = round((4-0).*rand(20,1));
 %rand_ro = round((4-2).*rand(20,1)+2);
-rand_ro = round((4-0).*rand(20,1)+4)
+rand_ro = round((4-0).*rand(20,1)+4);
 y = m1.isStreaming();
 tic
 m1.startStreaming();
 e = m1.emg_log;
-index = [1];
-index2 = [1];
+index = 1;
+index2 = 1;
 index_end = [1];
 for k = 1:20
     e = m1.emg_log;

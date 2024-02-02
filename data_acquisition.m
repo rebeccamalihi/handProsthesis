@@ -21,9 +21,9 @@ y = m1.isStreaming();
 tic
 m1.startStreaming();
 e = m1.emg_log;
-index = [1];
-index2 = [1];
-index_end = [1];
+index = 1;
+index2 = 1;
+index_end = 1;
 folder_name = fullfile("\Users\lab-admin\Desktop\Rebecca\" + name);
 
 %% %prepare directory to save the images

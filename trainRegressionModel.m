@@ -73,7 +73,7 @@ inputTable = trainingData;
 predictorNames = {'y'};
 predictors = inputTable(:, predictorNames);
 response = inputTable.a;
-isCategoricalPredictor = [false];
+isCategoricalPredictor = false;
 
 % Perform cross-validation
 partitionedModel = crossval(trainedModel.RegressionTree, 'KFold', 5);
