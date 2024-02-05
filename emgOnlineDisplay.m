@@ -1,5 +1,10 @@
 %% emg display
-e = 0;
+countMyos=1;
+mm= MyoMex(countMyos);
+m1 = mm.myoData();
+pause(1);
+e = m1.emg_log;
+%e = 0;
 for i = 1:1000000
     e = m1.emg_log;
     e1 = e(end-999:end,1);
