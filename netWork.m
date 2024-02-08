@@ -95,7 +95,7 @@ layers = [
     maxPooling2dLayer([5 5],"Name","maxpool_3","Padding","same")
     fullyConnectedLayer(20,"Name","fc_3")
     fullyConnectedLayer(2,"Name","fc_4")
-    scalingLayer("Name","scaling")
+    tanhLayer("Name","tanh")
     regressionLayer("Name","regressionoutput")];
 
     %ValidationData = {imgValSamples,YValidation}, ...
