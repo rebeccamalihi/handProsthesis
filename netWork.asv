@@ -3,12 +3,9 @@
 %%
 % initialision of varibales
 
-imds = imageDatastore("Reb\","IncludeSubfolders",true,"LabelSource","foldernames");
+imds = imageDatastore("Rebexis\","IncludeSubfolders",true,"LabelSource","foldernames");
 imds = shuffle(imds);
 [imdsTrain,imdsVal,imdsTest] = splitEachLabel(imds,0.7,0.15,0.15,"randomized");
-% imdsTrain = transform(imdsTrain, @(x) rescale(x));
-% imdsVal = transform(imdsVal, @(x) rescale(x));
-% imdsTest = transform(imdsTest, @(x) rescale(x));
 imgSamples = {};
 YTrain = {};
 
@@ -35,7 +32,12 @@ i = 0;
 thetaTrain = deg2rad(double(string(labels)));
 for i = 1:length(thetaTrain) 
     theta = thetaTrain(i);
-    [xTemp,yTemp] = pol2cart(theta,1);
+    if theta == 0 
+        xTemp = 0;
+        yTemp = 0;
+    else
+        [xTemp,yTemp] = pol2cart(theta,1);
+    end
     x = [x;xTemp];
     y = [y;yTemp];
 end
@@ -52,7 +54,14 @@ y = [];
 i = 0;
 thetaVal = deg2rad(double(string(labelsVal)));
 for i = 1:length(thetaVal)
-    [xTemp,yTemp] = pol2cart(thetaVal(i),1);
+    theta = thetaVal(i)
+        if theta == 0 
+        xTemp = 0;
+        yTemp = 0;
+    else
+        [xTemp,yTemp] = pol2cart(theta,1);
+    end
+    [xTemp,yTemp] = pol2cart(theta,1);
     x = [x;xTemp];
     y = [y;yTemp];
 end

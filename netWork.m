@@ -1,14 +1,11 @@
 %function netWork(name)
-% 
+%
 %%
 % initialision of varibales
 
-imds = imageDatastore("Reb\","IncludeSubfolders",true,"LabelSource","foldernames");
+imds = imageDatastore("Rebexis\","IncludeSubfolders",true,"LabelSource","foldernames");
 imds = shuffle(imds);
 [imdsTrain,imdsVal,imdsTest] = splitEachLabel(imds,0.7,0.15,0.15,"randomized");
-% imdsTrain = transform(imdsTrain, @(x) rescale(x));
-% imdsVal = transform(imdsVal, @(x) rescale(x));
-% imdsTest = transform(imdsTest, @(x) rescale(x));
 imgSamples = {};
 YTrain = {};
 
@@ -33,15 +30,20 @@ x = [];
 y = [];
 i = 0;
 thetaTrain = deg2rad(double(string(labels)));
-for i = 1:length(thetaTrain) 
+for i = 1:length(thetaTrain)
     theta = thetaTrain(i);
-    [xTemp,yTemp] = pol2cart(theta,1);
+    if theta == 0
+        xTemp = 0;
+        yTemp = 0;
+    else
+        [xTemp,yTemp] = pol2cart(theta,1);
+    end
     x = [x;xTemp];
     y = [y;yTemp];
 end
 response = x;%table(x,y);
-response (:,:,2)= y; 
-i = 0; 
+response (:,:,2)= y;
+i = 0;
 for i = 1:length(response)
     YTrain{i} = response(i,:,:);
 end
@@ -52,7 +54,13 @@ y = [];
 i = 0;
 thetaVal = deg2rad(double(string(labelsVal)));
 for i = 1:length(thetaVal)
-    [xTemp,yTemp] = pol2cart(thetaVal(i),1);
+    theta = thetaVal(i)
+    if theta == 0
+        xTemp = 0;
+        yTemp = 0;
+    else
+        [xTemp,yTemp] = pol2cart(theta,1);
+    end
     x = [x;xTemp];
     y = [y;yTemp];
 end
@@ -69,7 +77,13 @@ y = [];
 i = 0;
 thetaTest = deg2rad(double(string(labelsTest)));
 for i = 1:length(thetaTest)
-    [xTemp,yTemp] = pol2cart(thetaTest(i),1);
+    theta = thetaTrain(i);
+    if theta == 0
+        xTemp = 0;
+        yTemp = 0;
+    else
+        [xTemp,yTemp] = pol2cart(theta,1);
+    end
     x = [x;xTemp];
     y = [y;yTemp];
 end
@@ -95,10 +109,10 @@ layers = [
     maxPooling2dLayer([5 5],"Name","maxpool_3","Padding","same")
     fullyConnectedLayer(20,"Name","fc_3")
     fullyConnectedLayer(2,"Name","fc_4")
-    tanhLayer("Name","tanh")
+    scalingLayer("Name","scaling")
     regressionLayer("Name","regressionoutput")];
 
-    %ValidationData = {imgValSamples,YValidation}, ...
+%ValidationData = {imgValSamples,YValidation}, ...
 options = trainingOptions("adam", ...
     MaxEpochs = 20, ...
     MiniBatchSize = 16, ...

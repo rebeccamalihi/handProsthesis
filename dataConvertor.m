@@ -35,6 +35,4 @@ for j = 1:numberOfSessions
         end
     end
 end
-
-
 %end
