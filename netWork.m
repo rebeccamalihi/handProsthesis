@@ -54,7 +54,7 @@ y = [];
 i = 0;
 thetaVal = deg2rad(double(string(labelsVal)));
 for i = 1:length(thetaVal)
-    theta = thetaVal(i)
+    theta = thetaVal(i);
     if theta == 0
         xTemp = 0;
         yTemp = 0;
@@ -84,10 +84,10 @@ for i = 1:length(thetaTest)
     else
         [xTemp,yTemp] = pol2cart(theta,1);
     end
-    x = [x;xTemp];
-    y = [y;yTemp];
+    x = [x; xTemp];
+    y = [y; yTemp];
 end
-YTest = [x,y];
+YTest = [x, y];
 %%
 
 layers = [
@@ -112,15 +112,17 @@ layers = [
     scalingLayer("Name","scaling")
     regressionLayer("Name","regressionoutput")];
 
+
 %ValidationData = {imgValSamples,YValidation}, ...
 options = trainingOptions("adam", ...
     MaxEpochs = 20, ...
-    MiniBatchSize = 16, ...
+    MiniBatchSize = 64, ...
     Plots = "training-progress",...
-    InitialLearnRate=0.001,...
+    InitialLearnRate=0.0001,...
     Verbose=0,...
     Shuffle="every-epoch",...
     GradientThreshold=1e2);
+    
 %end
 
 YTrain = YTrain';
@@ -130,6 +132,6 @@ ypred = predict(net,imdsTest);
 rmse = sqrt(mean((ypred-YTest).^2));
 figure(1);scatter(YTest(:,1),ypred(:,1));
 figure(2);scatter(YTest(:,2),ypred(:,2));
-
+figure(3);scatter(ypred(:,1),ypred(:,2));
 
 

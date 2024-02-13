@@ -4,13 +4,10 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         % Specify and initialize environment's necessary properties
         % Max radius of the area
 
-        %myoStreaming = m1.isStreaming;
         test_subject = 'Rebecca'
         Reward = [];
         sampleTime = 0.25;
         Fs = 200; %Hz samplefrequency
-        % Index_amount = 20;
-        % Counter = 1;
         RewardForReachingGoal = 10;
         RewardForCorrectQuadrant = 1;
         blue_marker_radius = 0.08; % Acceptable distance to the goal point
@@ -62,7 +59,7 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
 
             %get action
             action_location = Action;
-            %Observation = this.State{3};% the emg sample
+            Observation = this.State{3};% the emg sample
             goal_location = this.State{1};
             goal_X = goal_location(1);
             goal_Y = goal_location(2);
@@ -92,9 +89,12 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         % Reset environment to initial state and output initial observation
         function InitialObservation = reset(this)
             action_location0 = [0 0];% the curser is located at the origin
-            %emgSample = getEmgInfo(this);
+            m = initMyo(this);
+            emgSample = getEmgSample(this,m);
+            img_matrix = abs(emgSample);
+            img_resize = repelem(img_matrix,1,5);
             goal_location = getGoalLocation(this);
-            InitialObservation = {goal_location, action_location0, emgSample};
+            InitialObservation = {goal_location, action_location0, img_resize}
             this.State = InitialObservation;
             notifyEnvUpdated(this);
         end
@@ -103,12 +103,12 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
     methods
         %Helper methods to create the environment
         function myoIsHere = initMyo(this)
-            % emg = []
+            emg = [];
             this.Myo = MyoMex();
             m = this.Myo;
-            %e = m.myoData();
+            e = m.myoData();
             pause(1);
-            %emg = e.emg_log;
+            emg = e.emg_log;
             myoIsHere = m;
         end
    
@@ -210,7 +210,7 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
                 action_center = this.State{2};
                 x_action = 0.5;%action_center(1);
                 y_action = 0.6;%action_center(2);
-                emgSample = 90;%*this.getEmgSample;
+                emgSample = this.getEmgSample;
                 action_point = scatter(ha,x_action,y_action,"green","g",'Marker','*',"LineWidth",5);
 
 
