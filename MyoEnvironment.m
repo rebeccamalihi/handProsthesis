@@ -17,7 +17,9 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         StepThreshold = 10;% the number of steps to fail the episode
     end
     properties
-        State = {[0 0],[0 0],zeros(40,40)}; % Zeros(1800,8)}; % Goal_location(cartesian), act_location(cartesian), 8 channel EMG input
+        
+        State = {[0 0],[0 0]};    %,zeros(40,40)}; % Zeros(1800,8)}; % Goal_location(cartesian), act_location(cartesian), 8 channel EMG input
+      
     end
     properties(Access = protected)
         % Initialize internal flag to indicate episode termination
@@ -32,23 +34,25 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
 
     %% Necessary Methods
     methods
+        
         % Constructor method creates an instance of the environment
         % Change class name and constructor name accordingly
         function this = MyoEnvironment()
             % Initialize Observation settings
-            ObservationInfo = rlNumericSpec([40 40]);
+            ObservationInfo = rlNumericSpec([40 40 1],'LowerLimit',0,'UpperLimit',1);
             ObservationInfo.Name = 'Observations';
             ObservationInfo.Description = 'EMG epoch 8 channels';
 
             % Initialize Action settings
             numAct = 2;
-            ActionInfo = rlNumericSpec([numAct 1], LowerLimit = -1 , UpperLimit = 1);
-            ActionInfo.Name = 'Action';
-            ActionInfo.Description = 'X and Y cartesin values';
+            ActionInfo(1) = rlNumericSpec([1 1], LowerLimit = -1 , UpperLimit = 1);
+            ActionInfo(1).Name = 'Action x';
+            ActionInfo(2) = rlNumericSpec([1 1], LowerLimit = -1 , UpperLimit = 1);
+            ActionInfo(2).Name = 'Action y';
+            %ActionInfo.Description = 'X and Y cartesin values';
 
             % The following line implements built-in functions of RL env
             this = this@rl.env.MATLABEnvironment(ObservationInfo,ActionInfo);
-
             %updateActionInfo(this);
         end
 
@@ -56,34 +60,42 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         % given action for one step.
         function [Observation,Reward,IsDone,LoggedSignals] = step(this,Action)
             LoggedSignals = [];
-
             %get action
             action_location = Action;
-            Observation = this.State{3};% the emg sample
+            m = this.Myo;
+            emgSample = getEmgSample(this,m);
+            img_matrix = abs(emgSample);
+            img_resize = repelem(img_matrix,1,5);
+            Observation = img_resize;
+       
             goal_location = this.State{1};
             goal_X = goal_location(1);
             goal_Y = goal_location(2);
             act_X = action_location(1);
             act_Y = action_location(2);
+            X = act_X{1};
+            Y = act_Y{1};
 
             % Update system states
-            %this.State = {goal_location, act_location, Observation};
+            %this.State = {goal_location, act_location};
 
             %reward
-            R = abs(2 - sqrt((act_x - goal_x)^2 + (act_y - goal_y)^2));
-            if R <= this.blue_marker_radius
-                Reward = this.RewardForReachingGoal;
+            R = abs(2 - sqrt((X - goal_X)^2 + (Y- goal_Y)^2))
+            Reward = R;
 
-            else
-                Reward = R;
-
-            end
+            % if R <= this.blue_marker_radius
+            %     Reward = this.RewardForReachingGoal;
+            % 
+            % else
+            %     Reward = R;
+            % 
+            % end
 
             this.Reward = Reward;
             % Check terminal condition
-            IsDone = R <= this.blue_marker_radius || R > 2;
-            this.IsDone = IsDone;
+            IsDone = false;
             notifyEnvUpdated(this);
+            clear("m")
         end
 
         % Reset environment to initial state and output initial observation
@@ -94,8 +106,12 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             img_matrix = abs(emgSample);
             img_resize = repelem(img_matrix,1,5);
             goal_location = getGoalLocation(this);
-            InitialObservation = {goal_location, action_location0, img_resize}
-            this.State = InitialObservation;
+            file = "EMGsample";
+            imwrite(img_resize,file,"jpeg");
+            s = imread("EMGsample");
+            InitialObservation =  im2double(s);
+            this.State = {goal_location, action_location0};
+            %clear("m");
             notifyEnvUpdated(this);
         end
     end
@@ -121,7 +137,7 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
                 disp('here')
             end
             %delete(m);
-            function clearMyo(m)
+            function clearMyo(this,m)
                 ea = m.myoData();
                 if ea.isStreaming == 1
                     delete(m);
