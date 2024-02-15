@@ -18,7 +18,7 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
     end
     properties
         
-        State = {[0 0],[0 0]};    %,zeros(40,40)}; % Zeros(1800,8)}; % Goal_location(cartesian), act_location(cartesian), 8 channel EMG input
+        State = {[0 0],[0 0],zeros(40,40)}; % Goal_location(cartesian), act_location(cartesian), 8 channel EMG input
       
     end
     properties(Access = protected)
@@ -45,10 +45,10 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
 
             % Initialize Action settings
             numAct = 2;
-            ActionInfo(1) = rlNumericSpec([1 1], LowerLimit = -1 , UpperLimit = 1);
-            ActionInfo(1).Name = 'Action x';
-            ActionInfo(2) = rlNumericSpec([1 1], LowerLimit = -1 , UpperLimit = 1);
-            ActionInfo(2).Name = 'Action y';
+            ActionInfo = rlNumericSpec([numAct 1], LowerLimit = -1 , UpperLimit = 1);
+            ActionInfo.Name = 'X and Y cartesin values';
+            % ActionInfo(2) = rlNumericSpec([1 1], LowerLimit = -1 , UpperLimit = 1);
+            % ActionInfo(2).Name = 'Action y';
             %ActionInfo.Description = 'X and Y cartesin values';
 
             % The following line implements built-in functions of RL env
@@ -62,53 +62,42 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             LoggedSignals = [];
             %get action
             action_location = Action;
-            m = initMyo(this);
-            Observation = getEmgSample(this,m);
-            clearMyo(this,m);
+            Observation = this.State{3};
             goal_location = this.State{1};
             goal_X = goal_location(1);
             goal_Y = goal_location(2);
             act_X = action_location(1);
             act_Y = action_location(2);
-            X = act_X{1};
-            Y = act_Y{1};
-
-            % Update system states
-            %this.State = {goal_location, act_location};
 
             %reward
-            R = abs(2 - sqrt((X - goal_X)^2 + (Y- goal_Y)^2))
+            R = abs(2 - sqrt((act_X - goal_X)^2 + (act_Y- goal_Y)^2));
             Reward = R;
-
-            % if R <= this.blue_marker_radius
-            %     Reward = this.RewardForReachingGoal;
-            % 
-            % else
-            %     Reward = R;
-            % 
-            % end
-
             this.Reward = Reward;
             % Check terminal condition
             IsDone = false;
-            notifyEnvUpdated(this);
+            %notifyEnvUpdated(this);
+            envUpdatedCallback(this);
+
         end
 
         % Reset environment to initial state and output initial observation
         function InitialObservation = reset(this)
             action_location0 = [0 0];% the curser is located at the origin
-            m = initMyo(this);
-            emgSample = getEmgSample(this,m);
-            img_matrix = abs(emgSample);
+            % m = initMyo(this);
+            % emgSample = getEmgSample(this,m);
+            % img_matrix = abs(emgSample);
+            img_matrix = initMyo(this);
             img_resize = repelem(img_matrix,1,5);
             goal_location = getGoalLocation(this);
             file = "EMGsample";
             imwrite(img_resize,file,"jpeg");
             s = imread("EMGsample");
             InitialObservation =  im2double(s);
-            this.State = {goal_location, action_location0};
-            clear("m")
-            notifyEnvUpdated(this);
+            this.State = {goal_location, action_location0, InitialObservation};
+            %notifyEnvUpdated(this);
+            envUpdatedCallback(this);
+
+
         end
     end
     %% Optional Methods (set methods' attributes accordingly)
@@ -116,12 +105,13 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         %Helper methods to create the environment
         function myoIsHere = initMyo(this)
             emg = [];
-            this.Myo = MyoMex();
-            m = this.Myo;
-            e = m.myoData();
-            pause(1);
-            emg = e.emg_log;
-            myoIsHere = m;
+            %this.Myo = MyoMex();
+            mm = MyoMex(); %mm = this.Myo;
+            m1 = mm.myoData();
+            pause(2);
+            emg = m1.emg_log;
+            mm.delete;
+            myoIsHere = emg(end-39:end,:);
         end
    
         function EMGSamples = getEmgSample(this,m)
@@ -132,11 +122,10 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
                 EMGSamples = abs(emg(end-39:end,:));
                 disp('here')
             end
-            %delete(m);
             function clearMyo(this,m)
                 ea = m.myoData();
                 if ea.isStreaming == 1
-                    delete(m);
+                    m.delete;
                 end
             end
         end
@@ -185,9 +174,6 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             ha.XLim = [-1.5 1.5];
             ha.YLim = [-1.5 1.5];
             hold(ha,'on');
-            % Initiate the emg display
-
-
             envUpdatedCallback(this)
         end
     end
@@ -205,14 +191,13 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
                 unitcircle = plot(ha,x_unit,y_unit,"Color",'r','LineStyle','--');
                 unitcircle.LineWidth  = 2;
                 % draw x and y axes
-                xLine_marker = linspace(-1.1,1.1,5);
-                xAxis = plot(ha,xLine_marker,zeros(5),"Color",'k',"LineWidth",2);
-                yAxis = plot(ha,zeros(5),xLine_marker,"Color",'k',"LineWidth",2);
+                xline(ha,0,'--r');
+                yline(ha,0,'--r');
                 % draw the goal position area, target point and the
                 % acceptable radius
                 th_blue_marker = linspace(0,2*pi,30);
                 [x_blue,y_blue] = pol2cart(th_blue_marker,this.blue_marker_radius);
-                goal_center = getGoalLocation(this);
+                goal_center = this.State{1};
                 xc_goal = goal_center(1);
                 yc_goal = goal_center(2);
                 x_goal = x_blue + xc_goal;
@@ -220,12 +205,12 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
                 goalArea = plot(ha,x_goal,y_goal,"Color",'b');
 
                 action_center = this.State{2};
-                x_action = 0.5;%action_center(1);
+                x_action = action_center(1);
                 y_action = 0.6;%action_center(2);
                 emgSample = this.getEmgSample;
                 action_point = scatter(ha,x_action,y_action,"green","g",'Marker','*',"LineWidth",5);
 
-
+                drawnow();
             end
         end
     end
