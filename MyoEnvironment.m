@@ -6,19 +6,20 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
 
         test_subject = 'Rebecca'
         Reward = [];
+        counter = 0;
         sampleTime = 0.25;
         Fs = 200; %Hz samplefrequency
         RewardForReachingGoal = 10;
-        RewardForCorrectQuadrant = 1;
+        %RewardForCorrectQuadrant = 1;
         blue_marker_radius = 0.08; % Acceptable distance to the goal point
         MaxRo = 1; %unit circle radius
         PenaltyForOutOfLimits = -10;
-        PenaltyForNotReachingGoal = -1;%penalty for not reaching the goal for every try
-        StepThreshold = 10;% the number of steps to fail the episode
+        %PenaltyForNotReachingGoal = -1;%penalty for not reaching the goal for every try
+        %StepThreshold = 10;% the number of steps to fail the episode
     end
     properties
         
-        State = {[0 0],[0 0],zeros(40,40)}; % Goal_location(cartesian), act_location(cartesian), 8 channel EMG input
+        State = {[0 0];[0 0];zeros(40,40)}; % Goal_location(cartesian), act_location(cartesian), 8 channel EMG input
       
     end
     properties(Access = protected)
@@ -47,9 +48,7 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             numAct = 2;
             ActionInfo = rlNumericSpec([numAct 1], LowerLimit = -1 , UpperLimit = 1);
             ActionInfo.Name = 'X and Y cartesin values';
-            % ActionInfo(2) = rlNumericSpec([1 1], LowerLimit = -1 , UpperLimit = 1);
-            % ActionInfo(2).Name = 'Action y';
-            %ActionInfo.Description = 'X and Y cartesin values';
+
 
             % The following line implements built-in functions of RL env
             this = this@rl.env.MATLABEnvironment(ObservationInfo,ActionInfo);
@@ -60,6 +59,7 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         % given action for one step.
         function [Observation,Reward,IsDone,LoggedSignals] = step(this,Action)
             LoggedSignals = [];
+            this.counter = this.counter+1;
             %get action
             action_location = Action;
             Observation = this.State{3};
@@ -68,24 +68,29 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             goal_Y = goal_location(2);
             act_X = action_location(1);
             act_Y = action_location(2);
-
-            %reward
-            R = abs(2 - sqrt((act_X - goal_X)^2 + (act_Y- goal_Y)^2));
-            Reward = R;
-            this.Reward = Reward;
+            s = sqrt(act_Y^2 + act_X^2);
+            if s > 1
+                Reward = this.PenaltyForOutOfLimits;
+            else 
+                %reward
+                R = sqrt((act_X - goal_X)^2 + (act_Y- goal_Y)^2);
+                if R <= this.blue_marker_radius
+                    Reward = this.RewardForReachingGoal;
+                else
+                    Reward = abs(2 - R);
+                end
+            end
+            this.Reward = Reward
             % Check terminal condition
             IsDone = false;
-            %notifyEnvUpdated(this);
-            envUpdatedCallback(this);
+            notifyEnvUpdated(this);
+            %envUpdatedCallback(this);
 
         end
 
         % Reset environment to initial state and output initial observation
         function InitialObservation = reset(this)
             action_location0 = [0 0];% the curser is located at the origin
-            % m = initMyo(this);
-            % emgSample = getEmgSample(this,m);
-            % img_matrix = abs(emgSample);
             img_matrix = initMyo(this);
             img_resize = repelem(img_matrix,1,5);
             goal_location = getGoalLocation(this);
@@ -93,9 +98,11 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             imwrite(img_resize,file,"jpeg");
             s = imread("EMGsample");
             InitialObservation =  im2double(s);
-            this.State = {goal_location, action_location0, InitialObservation};
-            %notifyEnvUpdated(this);
-            envUpdatedCallback(this);
+            this.State = {goal_location; action_location0; InitialObservation};
+            notifyEnvUpdated(this);
+            pause(1);
+
+            %envUpdatedCallback(this);
 
 
         end
@@ -114,47 +121,47 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             myoIsHere = emg(end-39:end,:);
         end
    
-        function EMGSamples = getEmgSample(this,m)
-            e = m.myoData();
-            if e.isStreaming == 1
-                emg = e.emg_log;
-                %figure(1);plot(reb(end-39:end,:));
-                EMGSamples = abs(emg(end-39:end,:));
-                disp('here')
-            end
-            function clearMyo(this,m)
-                ea = m.myoData();
-                if ea.isStreaming == 1
-                    m.delete;
-                end
-            end
-        end
-        function emgsample = getEmgPower(this)
-            m = initMyo(this);
-            this.EmgDisplay = uifigure('Visible','on','HandleVisibility','off');
-            emgCg = uigauge(this.EmgDisplay,"Position",[100 60 350 350]);
-            while 1
-                sigTemp = getEmgSample(this,m);
-                meanF = signalTimeFeatureExtractor("Mean", true, 'SampleRate', this.Fs);
-                meanFDS = arrayDatastore(sigTemp,"IterationDimension",2);
-                meanFDS = transform(meanFDS,@(x)meanF.extract(x{:}));
-                meanFeatures = readall(meanFDS,"UseParallel",true);
-                emgPower= max(meanFeatures);
-                emgCg.Value = 100 * emgPower;
-                % Refresh rendering in the figure window
-                drawnow();
-                if emgPower > 8
-                    sampleIsTaken = sigTemp;
-                    img_resize = repelem(sampleIsTaken,1,5);
-                    emgsample = img_resize;
-                    imwrite(img_resize,'sample.jpeg');
-                    imshow('sample.jpeg');
-                    break
-                end
-                pause(0.3);
-            end
-            clearMyo(m);
-        end
+        % function EMGSamples = getEmgSample(this,m)
+        %     e = m.myoData();
+        %     if e.isStreaming == 1
+        %         emg = e.emg_log;
+        %         %figure(1);plot(reb(end-39:end,:));
+        %         EMGSamples = abs(emg(end-39:end,:));
+        %         disp('here')
+        %     end
+        %     function clearMyo(this,m)
+        %         ea = m.myoData();
+        %         if ea.isStreaming == 1
+        %             m.delete;
+        %         end
+        %     end
+        % end
+        % function emgsample = getEmgPower(this)
+        %     m = initMyo(this);
+        %     this.EmgDisplay = uifigure('Visible','on','HandleVisibility','off');
+        %     emgCg = uigauge(this.EmgDisplay,"Position",[100 60 350 350]);
+        %     while 1
+        %         sigTemp = getEmgSample(this,m);
+        %         meanF = signalTimeFeatureExtractor("Mean", true, 'SampleRate', this.Fs);
+        %         meanFDS = arrayDatastore(sigTemp,"IterationDimension",2);
+        %         meanFDS = transform(meanFDS,@(x)meanF.extract(x{:}));
+        %         meanFeatures = readall(meanFDS,"UseParallel",true);
+        %         emgPower= max(meanFeatures);
+        %         emgCg.Value = 100 * emgPower;
+        %         % Refresh rendering in the figure window
+        %         drawnow();
+        %         if emgPower > 8
+        %             sampleIsTaken = sigTemp;
+        %             img_resize = repelem(sampleIsTaken,1,5);
+        %             emgsample = img_resize;
+        %             imwrite(img_resize,'sample.jpeg');
+        %             imshow('sample.jpeg');
+        %             break
+        %         end
+        %         pause(0.3);
+        %     end
+        %     clearMyo(m);
+        % end
 
         function goal_location = getGoalLocation(this)
             rand_goal_location = 1.1;
@@ -207,7 +214,6 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
                 action_center = this.State{2};
                 x_action = action_center(1);
                 y_action = action_center(2);
-                emgSample = this.getEmgSample;
                 action_point = scatter(ha,x_action,y_action,"green","g",'Marker','*',"LineWidth",5);
 
                 drawnow();
