@@ -1,3 +1,4 @@
+
 classdef MyoEnvironment < rl.env.MATLABEnvironment
     %% Properties (set properties' attributes accordingly)
     properties
@@ -14,6 +15,7 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         blue_marker_radius = 0.08; % Acceptable distance to the goal point
         MaxRo = 1; %unit circle radius
         PenaltyForOutOfLimits = -10;
+        mvc = 30;
         %PenaltyForNotReachingGoal = -1;%penalty for not reaching the goal for every try
         %StepThreshold = 10;% the number of steps to fail the episode
     end
@@ -80,30 +82,29 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
                     Reward = abs(2 - R);
                 end
             end
-            this.Reward = Reward
+            this.Reward = Reward;
             % Check terminal condition
             IsDone = false;
             notifyEnvUpdated(this);
-            %envUpdatedCallback(this);
+
 
         end
 
         % Reset environment to initial state and output initial observation
         function InitialObservation = reset(this)
             action_location0 = [0 0];% the curser is located at the origin
-            img_matrix = initMyo(this);
-            img_resize = repelem(img_matrix,1,5);
+            %img_matrix = initMyo(this);
             goal_location = getGoalLocation(this);
-            file = "EMGsample";
-            imwrite(img_resize,file,"jpeg");
-            s = imread("EMGsample");
-            InitialObservation =  im2double(s);
             this.State = {goal_location; action_location0; InitialObservation};
             notifyEnvUpdated(this);
-            pause(1);
-
-            %envUpdatedCallback(this);
-
+            prompt = "Are you ready? [y/n]";
+            txt = input(prompt,"s");
+            if isempty(txt)
+                txt = 'y';
+            end
+            if txt == 'y'
+                initMyo(this);
+            end
 
         end
     end
@@ -112,56 +113,35 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         %Helper methods to create the environment
         function myoIsHere = initMyo(this)
             emg = [];
-            %this.Myo = MyoMex();
             mm = MyoMex(); %mm = this.Myo;
             m1 = mm.myoData();
             pause(2);
-            emg = m1.emg_log;
-            mm.delete;
-            myoIsHere = emg(end-39:end,:);
+            emg = m1.emg_log(end-399:end,:);
+            figure(3);
+            figure(3);subplot(8,1,1);plot(emg(:,1));ylim([-1, 1]);
+            figure(3);subplot(8,1,2);plot(emg(:,2));ylim([-1, 1]);
+            figure(3);subplot(8,1,3);plot(emg(:,3));ylim([-1, 1]);
+            figure(3);subplot(8,1,4);plot(emg(:,4));ylim([-1, 1]);
+            figure(3);subplot(8,1,5);plot(emg(:,5));ylim([-1, 1]);
+            figure(3);subplot(8,1,6);plot(emg(:,6));ylim([-1, 1]);
+            figure(3);subplot(8,1,7);plot(emg(:,7));ylim([-1, 1]);
+            figure(3);subplot(8,1,8);plot(emg(:,8));ylim([-1, 1]);
+            
+            img_resize = repelem(img_matrix,1,5);
+            file = "EMGsample";
+            imwrite(img_resize,file,"jpeg");
+            ss = imread("EMGsample");
+            InitialObservation =  im2double(ss);
+            this.Myo = m1;
+
+
+%             mm.delete;
+%             myoIsHere = emg(end-39:end,:);
         end
-   
-        % function EMGSamples = getEmgSample(this,m)
-        %     e = m.myoData();
-        %     if e.isStreaming == 1
-        %         emg = e.emg_log;
-        %         %figure(1);plot(reb(end-39:end,:));
-        %         EMGSamples = abs(emg(end-39:end,:));
-        %         disp('here')
-        %     end
-        %     function clearMyo(this,m)
-        %         ea = m.myoData();
-        %         if ea.isStreaming == 1
-        %             m.delete;
-        %         end
-        %     end
-        % end
-        % function emgsample = getEmgPower(this)
-        %     m = initMyo(this);
-        %     this.EmgDisplay = uifigure('Visible','on','HandleVisibility','off');
-        %     emgCg = uigauge(this.EmgDisplay,"Position",[100 60 350 350]);
-        %     while 1
-        %         sigTemp = getEmgSample(this,m);
-        %         meanF = signalTimeFeatureExtractor("Mean", true, 'SampleRate', this.Fs);
-        %         meanFDS = arrayDatastore(sigTemp,"IterationDimension",2);
-        %         meanFDS = transform(meanFDS,@(x)meanF.extract(x{:}));
-        %         meanFeatures = readall(meanFDS,"UseParallel",true);
-        %         emgPower= max(meanFeatures);
-        %         emgCg.Value = 100 * emgPower;
-        %         % Refresh rendering in the figure window
-        %         drawnow();
-        %         if emgPower > 8
-        %             sampleIsTaken = sigTemp;
-        %             img_resize = repelem(sampleIsTaken,1,5);
-        %             emgsample = img_resize;
-        %             imwrite(img_resize,'sample.jpeg');
-        %             imshow('sample.jpeg');
-        %             break
-        %         end
-        %         pause(0.3);
-        %     end
-        %     clearMyo(m);
-        % end
+        function plotEMG(this)
+        function myoSample = getEmg(this)
+            initMyo(this);
+        end
 
         function goal_location = getGoalLocation(this)
             rand_goal_location = 1.1;
@@ -215,8 +195,9 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
                 x_action = action_center(1);
                 y_action = action_center(2);
                 action_point = scatter(ha,x_action,y_action,"green","g",'Marker','*',"LineWidth",5);
-
+                disp('hera')
                 drawnow();
+                
             end
         end
     end
