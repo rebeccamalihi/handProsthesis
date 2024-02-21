@@ -2,7 +2,8 @@
 classdef MyoEnvironment < rl.env.MATLABEnvironment
     %% Properties (set properties' attributes accordingly)
     properties
-        % Specify and initialize environment's necessary properties
+        % Specify and initialize environment's necessar 
+        % y properties
         % Max radius of the area
 
         test_subject = 'Rebecca'
@@ -71,6 +72,9 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             act_X = action_location(1);
             act_Y = action_location(2);
             s = sqrt(act_Y^2 + act_X^2);
+            this.State = {goal_location,action_location,Observation};
+            notifyEnvUpdated(this);
+            IsDone = false;
             if s > 1
                 Reward = this.PenaltyForOutOfLimits;
             else 
@@ -78,14 +82,15 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
                 R = sqrt((act_X - goal_X)^2 + (act_Y- goal_Y)^2);
                 if R <= this.blue_marker_radius
                     Reward = this.RewardForReachingGoal;
+                    IsDone = true;
                 else
                     Reward = abs(2 - R);
                 end
             end
             this.Reward = Reward;
             % Check terminal condition
-            IsDone = false;
-            notifyEnvUpdated(this);
+            
+            
 
 
         end
@@ -93,9 +98,8 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         % Reset environment to initial state and output initial observation
         function InitialObservation = reset(this)
             action_location0 = [0 0];% the curser is located at the origin
-            %img_matrix = initMyo(this);
-            goal_location = getGoalLocation(this);
-            this.State = {goal_location; action_location0; InitialObservation};
+            goal_location = getGoalLocation(this)
+            this.State = {goal_location; action_location0; this.State};
             notifyEnvUpdated(this);
             prompt = "Are you ready? [y/n]";
             txt = input(prompt,"s");
@@ -103,8 +107,9 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
                 txt = 'y';
             end
             if txt == 'y'
-                initMyo(this);
+                InitialObservation = initMyo(this);
             end
+            this.State = {goal_location; action_location0; InitialObservation};
 
         end
     end
@@ -115,7 +120,7 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             emg = [];
             mm = MyoMex(); %mm = this.Myo;
             m1 = mm.myoData();
-            pause(2);
+            pause(3);
             emg = m1.emg_log(end-399:end,:);
             figure(3);
             figure(3);subplot(8,1,1);plot(emg(:,1));ylim([-1, 1]);
@@ -126,19 +131,20 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             figure(3);subplot(8,1,6);plot(emg(:,6));ylim([-1, 1]);
             figure(3);subplot(8,1,7);plot(emg(:,7));ylim([-1, 1]);
             figure(3);subplot(8,1,8);plot(emg(:,8));ylim([-1, 1]);
-            
+            img_matrix = emg(end-39:end,:);
             img_resize = repelem(img_matrix,1,5);
             file = "EMGsample";
             imwrite(img_resize,file,"jpeg");
             ss = imread("EMGsample");
             InitialObservation =  im2double(ss);
-            this.Myo = m1;
+            myoIsHere = InitialObservation;
 
 
-%             mm.delete;
+             mm.delete;
 %             myoIsHere = emg(end-39:end,:);
         end
         function plotEMG(this)
+        end
         function myoSample = getEmg(this)
             initMyo(this);
         end
@@ -160,8 +166,17 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             ha.YLimMode = 'manual';
             ha.XLim = [-1.5 1.5];
             ha.YLim = [-1.5 1.5];
+            
+            %draw the unit circle
+            th_red_marker = linspace(0,2*pi,60);
+            [x_unit,y_unit] = pol2cart(th_red_marker,this.MaxRo);
+            unitcircle = plot(ha,x_unit,y_unit,"Color",'r','LineStyle','--');
+            unitcircle.LineWidth  = 2;
+            % draw x and y axes
+            xline(ha,0,'--r');
+            yline(ha,0,'--r');
             hold(ha,'on');
-            envUpdatedCallback(this)
+            envUpdatedCallback(this);
         end
     end
     %
@@ -172,14 +187,10 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             if ~isempty(this.Figure) && isvalid(this.Figure)
                 % Set visualization figure as the current figure
                 ha = gca(this.Figure);
-                % draw the unit circle
-                th_red_marker = linspace(0,2*pi,60);
-                [x_unit,y_unit] = pol2cart(th_red_marker,this.MaxRo);
-                unitcircle = plot(ha,x_unit,y_unit,"Color",'r','LineStyle','--');
-                unitcircle.LineWidth  = 2;
-                % draw x and y axes
-                xline(ha,0,'--r');
-                yline(ha,0,'--r');
+                goalArea = findobj(ha,'Tag','goalArea');
+                action_point = findobj(ha,'Tag','action_point');
+                delete(goalArea);
+                delete(action_point);
                 % draw the goal position area, target point and the
                 % acceptable radius
                 th_blue_marker = linspace(0,2*pi,30);
@@ -189,14 +200,18 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
                 yc_goal = goal_center(2);
                 x_goal = x_blue + xc_goal;
                 y_goal = y_blue + yc_goal;
-                goalArea = plot(ha,x_goal,y_goal,"Color",'b');
 
+                goalArea = plot(ha,x_goal,y_goal,"Color",'b');drawnow;
+                goalArea.Tag = 'goalArea';
+              
                 action_center = this.State{2};
                 x_action = action_center(1);
                 y_action = action_center(2);
                 action_point = scatter(ha,x_action,y_action,"green","g",'Marker','*',"LineWidth",5);
+                action_point.Tag = 'action_point';
+                drawnow;
                 disp('hera')
-                drawnow();
+                
                 
             end
         end
