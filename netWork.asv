@@ -1,5 +1,5 @@
 %function netWork(name)
-% 
+%
 %%
 % initialision of varibales
 
@@ -30,9 +30,9 @@ x = [];
 y = [];
 i = 0;
 thetaTrain = deg2rad(double(string(labels)));
-for i = 1:length(thetaTrain) 
+for i = 1:length(thetaTrain)
     theta = thetaTrain(i);
-    if theta == 0 
+    if theta == 0
         xTemp = 0;
         yTemp = 0;
     else
@@ -42,8 +42,8 @@ for i = 1:length(thetaTrain)
     y = [y;yTemp];
 end
 response = x;%table(x,y);
-response (:,:,2)= y; 
-i = 0; 
+response (:,:,2)= y;
+i = 0;
 for i = 1:length(response)
     YTrain{i} = response(i,:,:);
 end
@@ -54,14 +54,13 @@ y = [];
 i = 0;
 thetaVal = deg2rad(double(string(labelsVal)));
 for i = 1:length(thetaVal)
-    theta = thetaVal(i)
-        if theta == 0 
+    theta = thetaVal(i);
+    if theta == 0
         xTemp = 0;
         yTemp = 0;
     else
         [xTemp,yTemp] = pol2cart(theta,1);
     end
-    [xTemp,yTemp] = pol2cart(theta,1);
     x = [x;xTemp];
     y = [y;yTemp];
 end
@@ -78,44 +77,92 @@ y = [];
 i = 0;
 thetaTest = deg2rad(double(string(labelsTest)));
 for i = 1:length(thetaTest)
-    [xTemp,yTemp] = pol2cart(thetaTest(i),1);
-    x = [x;xTemp];
-    y = [y;yTemp];
+    theta = thetaTrain(i);
+    if theta == 0
+        xTemp = 0;
+        yTemp = 0;
+    else
+        [xTemp,yTemp] = pol2cart(theta,1);
+    end
+    x = [x; xTemp];
+    y = [y; yTemp];
 end
-YTest = [x,y];
+YTest = [x, y];
 %%
-
+% 
+% layers = [
+%     imageInputLayer([40 40 1],"Name","imageinput")
+%     convolution2dLayer([3 3],16,"Name","conv","Padding","same")
+%     leakyReluLayer(0.01,"Name","leakyrelu")
+%     maxPooling2dLayer([5 5],"Name","maxpool","Padding","same")
+%     dropoutLayer(0.5,"Name","dropout_2")
+% %     fullyConnectedLayer(16,"Name","fc")
+% %     convolution2dLayer([3 3],16,"Name","conv_1","Padding","same")
+% %     leakyReluLayer(0.01,"Name","leakyrelu_1")
+% %     maxPooling2dLayer([5 5],"Name","maxpool_1","Padding","same")
+% %     fullyConnectedLayer(32,"Name","fc_1")
+% %      convolution2dLayer([3 3],32,"Name","conv_2","Padding","same")
+% %     leakyReluLayer(0.01,"Name","leakyrelu_2")
+% %     maxPooling2dLayer([5 5],"Name","maxpool_2","Padding","same")
+%  %   fullyConnectedLayer(32,"Name","fc_2")
+% %     convolution2dLayer([3 3],32,"Name","conv_3","Padding","same")
+% %     leakyReluLayer(0.01,"Name","leakyrelu_3")
+% %     maxPooling2dLayer([5 5],"Name","maxpool_3","Padding","same")
+% 
+% %     fullyConnectedLayer(100,"Name","fc_3")
+% %     reluLayer
+%      fullyConnectedLayer(100,"Name","fc_4")
+% %     reluLayer
+%     fullyConnectedLayer(20,"Name","fc_5")
+%     fullyConnectedLayer(2,"Name","fc_6")
+%     tanhLayer("Name","tanh")
+%     scalingLayer("Name","scaling")
+%     regressionLayer("Name","regressionoutput")];
 layers = [
     imageInputLayer([40 40 1],"Name","imageinput")
     convolution2dLayer([3 3],16,"Name","conv","Padding","same")
-    leakyReluLayer(0.01,"Name","leakyrelu")
-    maxPooling2dLayer([5 5],"Name","maxpool","Padding","same")
-    fullyConnectedLayer(16,"Name","fc")
+    batchNormalizationLayer("Name","batchnorm_1")
+    leakyReluLayer(0.01,"Name","leakyrelu_4")
+    maxPooling2dLayer([3 3],"Name","maxpool","Padding","same")
+    dropoutLayer(0.5,"Name","dropout_1")
     convolution2dLayer([3 3],16,"Name","conv_1","Padding","same")
+    batchNormalizationLayer("Name","batchnorm_2")
     leakyReluLayer(0.01,"Name","leakyrelu_1")
-    maxPooling2dLayer([5 5],"Name","maxpool_1","Padding","same")
-    fullyConnectedLayer(32,"Name","fc_1")
+    maxPooling2dLayer([3 3],"Name","maxpool_1","Padding","same")
+    dropoutLayer(0.5,"Name","dropout_2")
     convolution2dLayer([3 3],32,"Name","conv_2","Padding","same")
+    batchNormalizationLayer("Name","batchnorm_3")
     leakyReluLayer(0.01,"Name","leakyrelu_2")
-    maxPooling2dLayer([5 5],"Name","maxpool_2","Padding","same")
-    fullyConnectedLayer(32,"Name","fc_2")
+    maxPooling2dLayer([3 3],"Name","maxpool_2","Padding","same")
+    dropoutLayer(0.5,"Name","dropout_3")
     convolution2dLayer([3 3],32,"Name","conv_3","Padding","same")
+    batchNormalizationLayer("Name","batchnorm_4")
     leakyReluLayer(0.01,"Name","leakyrelu_3")
-    maxPooling2dLayer([5 5],"Name","maxpool_3","Padding","same")
-    fullyConnectedLayer(20,"Name","fc_3")
-    fullyConnectedLayer(2,"Name","fc_4")
+    maxPooling2dLayer([3 3],"Name","maxpool_3","Padding","same")
+    dropoutLayer(0.5,"Name","dropout_4")
+    fullyConnectedLayer(100,"Name","fc_4")
+    batchNormalizationLayer("Name","batchnorm_5")
+    leakyReluLayer(0.01,"Name","leakyrelu_5")
+    dropoutLayer(0.5,"Name","dropout_5")
+    fullyConnectedLayer(20,"Name","fc_5")
+    batchNormalizationLayer("Name","batchnorm_6")
+    leakyReluLayer(0.01,"Name","leakyrelu_6")
+    dropoutLayer(0.5,"Name","dropout_6")
+    fullyConnectedLayer(2,"Name","fc_6")
     tanhLayer("Name","tanh")
+    scalingLayer("Name","scaling")
     regressionLayer("Name","regressionoutput")];
 
-    %ValidationData = {imgValSamples,YValidation}, ...
-options = trainingOptions("adam", ...
-    MaxEpochs = 20, ...
-    MiniBatchSize = 16, ...
+%ValidationData = {imgValSamples,YValidation}, ...
+options = trainingOptions("sgdm", ...
+    MaxEpochs = 50, ...
+    MiniBatchSize = 32, ...
     Plots = "training-progress",...
-    InitialLearnRate=0.001,...
+    InitialLearnRate=0.0001,...
     Verbose=0,...
     Shuffle="every-epoch",...
-    GradientThreshold=1e2);
+    GradientThreshold=1e3);
+    
 %end
 
 YTrain = YTrain';
@@ -126,5 +173,8 @@ rmse = sqrt(mean((ypred-YTest).^2));
 figure(1);scatter(YTest(:,1),ypred(:,1));
 figure(2);scatter(YTest(:,2),ypred(:,2));
 
+diferense = abs(ypred(:,1)-YTest(:,1));
+x = find(diferense>0.1);
 
-
+scatter(ypred(x(:),1),ypred(x(:),2));
+figure(3);scatter(ypred(:,1),ypred(:,2));
