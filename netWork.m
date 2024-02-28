@@ -3,7 +3,7 @@
 %%
 % initialision of varibales
 clear all
-imds = imageDatastore("Rebecca\","IncludeSubfolders",true,"LabelSource","foldernames");
+imds = imageDatastore("Sub1\","IncludeSubfolders",true,"LabelSource","foldernames");
 imds = shuffle(imds);
 [imdsTrain,imdsVal,imdsTest] = splitEachLabel(imds,0.7,0.15,0.15,"randomized");
 imgSamples = {};
@@ -92,93 +92,57 @@ YTest = [x, y];
 % 
 
 
-
-
 layers = [
     imageInputLayer([40 40 1],"Name","imageinput")
     convolution2dLayer([5 5],16,"Name","conv_1","Padding","same")
     batchNormalizationLayer("Name","batchnorm_1")
     leakyReluLayer(0.1,"Name","leakyrelu_4")
-    maxPooling2dLayer([5 5],"Name","maxpool_1","Padding","same")
-    dropoutLayer(0.2,"Name","dropout_2_1")
-    convolution2dLayer([5 5],32,"Name","conv_2","Padding","same")
+    averagePooling2dLayer([5 5],"Name","maxpool_1","Padding","same")
+    dropoutLayer(0.1,"Name","dropout_2_1")
+    convolution2dLayer([3 3],32,"Name","conv_2","Padding","same")
     batchNormalizationLayer("Name","batchnorm")
     leakyReluLayer(0.1,"Name","leakyrelu_6")
-    maxPooling2dLayer([5 5],"Name","maxpool_2","Padding","same")
+    averagePooling2dLayer([5 5],"Name","maxpool_2","Padding","same")
     dropoutLayer(0.2,"Name","dropout_2_2")
-    fullyConnectedLayer(128,"Name","fc_3_1")
+    fullyConnectedLayer(400,"Name","fc_1")
     leakyReluLayer(0.1,"Name","leakyrelu_2")
-    fullyConnectedLayer(256,"Name","fc_4_1")
+    fullyConnectedLayer(400,"Name","fc_2")
     leakyReluLayer(0.1,"Name","leakyrelu_3")
-    fullyConnectedLayer(256,"Name","fc_3_2")
-    leakyReluLayer(0.1,"Name","leakyrelu_5")
-    fullyConnectedLayer(2,"Name","fc_4_2")
+    %flattenLayer("Name","flatten")
+    %lstmLayer(128,"Name","lstm")
+    fullyConnectedLayer(2,"Name","fc_3")
     tanhLayer("Name","tanh")
     scalingLayer("Name","scaling")
     regressionLayer("Name","regressionoutput")];
-% layers2 = [
-%     imageInputLayer([40 40 1],"Name","imageinput")
-%     convolution2dLayer([3 3],16,"Name","conv","Padding","same")
-%     batchNormalizationLayer("Name","batchnorm_1")
-%     leakyReluLayer(0.1,"Name","leakyrelu_4")
-%     maxPooling2dLayer([3 3],"Name","maxpool","Padding","same")
-%     dropoutLayer(0.3,"Name","dropout_1")
-%     convolution2dLayer([3 3],16,"Name","conv_1","Padding","same")
-%     batchNormalizationLayer("Name","batchnorm_2")
-%     leakyReluLayer(0.1,"Name","leakyrelu_1")
-%     maxPooling2dLayer([3 3],"Name","maxpool_1","Padding","same")
-%     dropoutLayer(0.3,"Name","dropout_2")
-%     convolution2dLayer([3 3],32,"Name","conv_2","Padding","same")
-%     batchNormalizationLayer("Name","batchnorm_3")
-%     leakyReluLayer(0.1,"Name","leakyrelu_2")
-%     maxPooling2dLayer([3 3],"Name","maxpool_2","Padding","same")
-%     dropoutLayer(0.3,"Name","dropout_3")
-%     convolution2dLayer([3 3],32,"Name","conv_3","Padding","same")
-%     batchNormalizationLayer("Name","batchnorm_4")
-%     leakyReluLayer(0.1,"Name","leakyrelu_3")
-%     maxPooling2dLayer([3 3],"Name","maxpool_3","Padding","same")
-%     dropoutLayer(0.3,"Name","dropout_4")
-%     fullyConnectedLayer(100,"Name","fc_4")
-%     batchNormalizationLayer("Name","batchnorm_5")
-%     leakyReluLayer(0.1,"Name","leakyrelu_5")
-%     dropoutLayer(0.3,"Name","dropout_5")
-%     fullyConnectedLayer(20,"Name","fc_5")
-%     batchNormalizationLayer("Name","batchnorm_6")
-%     leakyReluLayer(0.1,"Name","leakyrelu_6")
-%     dropoutLayer(0.3,"Name","dropout_6")
-%     fullyConnectedLayer(2,"Name","fc_6")
-%     tanhLayer("Name","tanh")
-%     %scalingLayer("Name","scaling")
-%     regressionLayer("Name","regressionoutput")];
 
 
 validationtables = table(imgValSamples,YValidation);
-options = trainingOptions("sgdm", ...
+options = trainingOptions("adam", ...
     ValidationData = validationtables, ...
-    MaxEpochs = 50, ...
-    MiniBatchSize = 64, ...
+    MaxEpochs = 100, ...
+    MiniBatchSize = 128, ...
     Plots = "training-progress",...
-    InitialLearnRate=0.001,...
-    LearnRateDropPeriod = 20, ...
+    InitialLearnRate=0.0001,...
+    LearnRateDropPeriod = 10, ...
     LearnRateDropFactor= 0.1,...
     Verbose=0,...
     Shuffle="every-epoch",...
-    GradientThreshold=1e3);
+    GradientThreshold=1e5);
     
 %end
 
 YTrain = YTrain';
 lbltables = table(imgSamples,YTrain);
+
 net = trainNetwork(lbltables,layers,options);
 ypred = predict(net,imdsTest);
 rmse = sqrt(mean((ypred-YTest).^2));
+%%
 figure(1);scatter(YTest(:,1),ypred(:,1));
 figure(2);scatter(YTest(:,2),ypred(:,2));
 
 diferense = abs(ypred(:,1)-YTest(:,1));
 x = find(diferense>0.1);
-%%
-
 figure(3);scatter(ypred(:,1),ypred(:,2));
 hold on
 figure(3);scatter(ypred(x,1),ypred(x,2));
