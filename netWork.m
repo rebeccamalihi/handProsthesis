@@ -3,7 +3,7 @@
 %%
 % initialision of varibales
 clear all
-imds = imageDatastore("Sub1\","IncludeSubfolders",true,"LabelSource","foldernames");
+imds = imageDatastore("Rebexis","IncludeSubfolders",true,"LabelSource","foldernames");
 imds = shuffle(imds);
 [imdsTrain,imdsVal,imdsTest] = splitEachLabel(imds,0.7,0.15,0.15,"randomized");
 imgSamples = {};
@@ -91,43 +91,55 @@ YTest = [x, y];
 %%
 % 
 
-
 layers = [
     imageInputLayer([40 40 1],"Name","imageinput")
-    convolution2dLayer([5 5],16,"Name","conv_1","Padding","same")
-    batchNormalizationLayer("Name","batchnorm_1")
-    leakyReluLayer(0.1,"Name","leakyrelu_4")
-    averagePooling2dLayer([5 5],"Name","maxpool_1","Padding","same")
-    dropoutLayer(0.1,"Name","dropout_2_1")
-    convolution2dLayer([3 3],32,"Name","conv_2","Padding","same")
-    batchNormalizationLayer("Name","batchnorm")
-    leakyReluLayer(0.1,"Name","leakyrelu_6")
-    averagePooling2dLayer([5 5],"Name","maxpool_2","Padding","same")
-    dropoutLayer(0.2,"Name","dropout_2_2")
-    fullyConnectedLayer(400,"Name","fc_1")
+    convolution2dLayer([3 3],8,"Name","conv_1","Padding","same")
+    %batchNormalizationLayer("Name","batchnorm_1")
+    leakyReluLayer(0.1,"Name","leakyrelu_1")
+    maxPooling2dLayer([2 2],"Name","maxpool_1","Padding","same")
+    dropoutLayer(0.1,"Name","dropout_1")
+    convolution2dLayer([3 3],16,"Name","conv_2","Padding","same")
+    %batchNormalizationLayer("Name","batchnorm_2")
     leakyReluLayer(0.1,"Name","leakyrelu_2")
-    fullyConnectedLayer(400,"Name","fc_2")
+    maxPooling2dLayer([2 2],"Name","maxpool_2","Padding","same")
+    dropoutLayer(0.1,"Name","dropout_2")
+    convolution2dLayer([3 3],32,"Name","conv_3","Padding","same")
+    %batchNormalizationLayer("Name","batchnorm_3")
     leakyReluLayer(0.1,"Name","leakyrelu_3")
-    %flattenLayer("Name","flatten")
-    %lstmLayer(128,"Name","lstm")
-    fullyConnectedLayer(2,"Name","fc_3")
+    maxPooling2dLayer([2 2],"Name","maxpool_3","Padding","same")
+    dropoutLayer(0.1,"Name","dropout_3")
+    convolution2dLayer([3 3],64,"Name","conv_4","Padding","same")
+    %batchNormalizationLayer("Name","batchnorm_4")
+    leakyReluLayer(0.1,"Name","leakyrelu_4")
+    maxPooling2dLayer([2 2],"Name","maxpool_4","Padding","same")
+    dropoutLayer(0.1,"Name","dropout_4")
+    fullyConnectedLayer(256,"Name","fc")
+    leakyReluLayer(0.1,"Name","leakyrelu_4")
+    fullyConnectedLayer(256,"Name","fc_1")
+    leakyReluLayer(0.1,"Name","leakyrelu_5")
+    fullyConnectedLayer(128,"Name","fc_2")
+    leakyReluLayer(0.1,"Name","leakyrelu_6")
+    fullyConnectedLayer(2,"Name","fc_4")
+    leakyReluLayer(0.1,"Name","leakyrelu_7")
     tanhLayer("Name","tanh")
     scalingLayer("Name","scaling")
     regressionLayer("Name","regressionoutput")];
 
 
 validationtables = table(imgValSamples,YValidation);
-options = trainingOptions("adam", ...
+options = trainingOptions("sgdm", ...
     ValidationData = validationtables, ...
-    MaxEpochs = 100, ...
-    MiniBatchSize = 128, ...
+    MaxEpochs = 50, ...
+    MiniBatchSize = 64, ...
+    ValidationFrequency=10,...
     Plots = "training-progress",...
-    InitialLearnRate=0.0001,...
-    LearnRateDropPeriod = 10, ...
-    LearnRateDropFactor= 0.1,...
+    InitialLearnRate=0.0002,...
     Verbose=0,...
     Shuffle="every-epoch",...
-    GradientThreshold=1e5);
+    GradientThreshold=1e7,...
+    LearnRateSchedule="piecewise",...
+    LearnRateDropPeriod=5,...
+    LearnRateDropFactor=0.03);
     
 %end
 
