@@ -15,8 +15,9 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         %RewardForCorrectQuadrant = 1;
         blue_marker_radius = 0.08; % Acceptable distance to the goal point
         MaxRo = 1; %unit circle radius
-        PenaltyForOutOfLimits = -10;
+        PenaltyForOutOfLimits = -20;
         mvc = 30;
+        Ts = 1;
         %PenaltyForNotReachingGoal = -1;%penalty for not reaching the goal for every try
         %StepThreshold = 10;% the number of steps to fail the episode
     end
@@ -77,14 +78,15 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             IsDone = false;
             if s > 1
                 Reward = this.PenaltyForOutOfLimits;
+                %IsDone = true;
             else 
                 %reward
                 R = sqrt((act_X - goal_X)^2 + (act_Y- goal_Y)^2);
                 if R <= this.blue_marker_radius
                     Reward = this.RewardForReachingGoal;
-                    IsDone = true;
+                    %IsDone = true;
                 else
-                    Reward = abs(2 - R);
+                    Reward = 0;%abs(2 - R);
                 end
             end
             this.Reward = Reward;

@@ -94,13 +94,4 @@ lbltables = table(imgSamples,YTrain);
 
 net = trainNetwork(lbltables,layers,options);
 ypred = predict(net,imdsTest);
-rmse = sqrt(mean((ypred-YTest).^2));
-%%
-figure(1);scatter(YTest(:,1),ypred(:,1));
-figure(2);scatter(YTest(:,2),ypred(:,2));
 
-diferense = abs(ypred(:,1)-YTest(:,1));
-x = find(diferense>0.1);
-figure(3);scatter(ypred(:,1),ypred(:,2));
-hold on
-figure(3);scatter(ypred(x,1),ypred(x,2));
