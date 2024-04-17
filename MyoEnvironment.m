@@ -46,12 +46,12 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             % Initialize Observation settings
             ObservationInfo = rlNumericSpec([40 40 1],'LowerLimit',0,'UpperLimit',1);
             ObservationInfo.Name = 'Observations';
-            ObservationInfo.Description = 'EMG epoch 8 channels';
+            ObservationInfo.Description = '40 * 40 * 1   8 channels EMG';
 
             % Initialize Action settings
             numAct = 2;
             ActionInfo = rlNumericSpec([numAct 1], LowerLimit = -1 , UpperLimit = 1);
-            ActionInfo.Name = 'X and Y cartesin values';
+            ActionInfo.Name = 'Actionsyx';
 
 
             % The following line implements built-in functions of RL env
@@ -86,7 +86,7 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
                     Reward = this.RewardForReachingGoal;
                     %IsDone = true;
                 else
-                    Reward = 0;%abs(2 - R);
+                    Reward = abs(2 - R);
                 end
             end
             this.Reward = Reward;
@@ -152,12 +152,13 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         end
 
         function goal_location = getGoalLocation(this)
-            rand_goal_location = 1.1;
-            while rand_goal_location > 1
-                rand_goal = -1 + 2 * rand(1,2);
-                rand_goal_location = sqrt(rand_goal(1)^2+rand_goal(2)^2);
-            end
-            goal_location = rand_goal;
+            ro = [0,0.5,1];
+            theta = linspace(0,2*pi,5);
+            index_ro = randperm(3,1);
+            index_theta = randperm(5,1);
+            [x,y] = pol2cart(theta(index_theta),ro(index_ro));
+            goal_location = [x y];
+
         end
 
         function plot(this)

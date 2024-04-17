@@ -16,7 +16,7 @@ for i = 1:1000000
     YPred = predict(net,emg_img);
     scatter(p,YPred(1),YPred(2));
     hold(p,"off");
-    pause(1);
+    pause(0.2);
 end
 
 
