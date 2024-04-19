@@ -6,7 +6,7 @@ function data = data_acquisition(name,session,m1)
 %given as arguments
 
 %% variables
-
+load('Reb\MVC_info.m','MVCTable');
 data = {};
 gestureNum = 5; %number of time for each guster to be performed
 pTime = 5; %seconds for each gesture
@@ -21,9 +21,9 @@ y = m1.isStreaming();
 tic
 m1.startStreaming();
 e = m1.emg_log;
-index = [1];
-index2 = [1];
-index_end = [1];
+index = 1;
+index2 = 1;
+index_end = 1;
 folder_name = fullfile("\Users\lab-admin\Desktop\Rebecca\" + name);
 
 %% %prepare directory to save the images

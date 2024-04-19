@@ -1,13 +1,15 @@
 %function dataConvertor(name,session)
 %%this function is created to convert the raw signals to images with size of 40*40
 %session = 1; 
-name = "Reb";
+name = "Rebecka";
 folderName = fullfile("\Users\lab-admin\Desktop\Rebecca\" + name);
 fds = fileDatastore(folderName, 'FileExtensions', '.mat','ReadFcn', @importdata );
 %data = read(fds);
 list = readall(fds);
 numberOfSessions = length(fds.Files);
-data = list{1};
+for i = 1:length(list)
+    data = list{i};%ino dorost kon
+end
 trialPerSession = length(data);
 fs = 200;%Hz
 emgMatPerTrial = length(data{1}.signal)*5/fs;
@@ -33,6 +35,4 @@ for j = 1:numberOfSessions
         end
     end
 end
-
-
 %end

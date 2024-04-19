@@ -3,8 +3,8 @@
 %%200Hz
 % mm = MyoMex;
 % m1 = mm.myoData;
-function emg_display(data)
-e =[]
+function out = emg_display(data)
+e = [];
 for i= 1:length(data)
     sig = data{i};
     signal = sig.signal;
@@ -54,4 +54,5 @@ end
 %     figure(3);subplot(8,1,6);plot(e6);ylim([-1, 1]); 
 %     figure(3);subplot(8,1,7);plot(e7);ylim([-1, 1]); 
 %     figure(3);subplot(8,1,8);plot(e8);ylim([-1, 1]); 
+out = e;
 end
