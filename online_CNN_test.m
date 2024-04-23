@@ -2,6 +2,9 @@
 i = 0;
 Figure = figure('Visible','on','HandleVisibility','off');
 p = gca(Figure);
+netModel = layerGraph(model.Layers);
+plot(netModel);
+actorNetwork = removeLayers(actorNetwork,["scaling","regressionoutput","leakyrelu_8"]);
 for i = 1:1000000
     th = 0 : pi/50:2*pi;
     xunit = 1 * cos(th) + 0;

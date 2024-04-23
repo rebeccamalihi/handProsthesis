@@ -1,7 +1,8 @@
-%function netWork(name)
+% function net = netWork(name)
 
-clear all
-imds = imageDatastore("Rebexis","IncludeSubfolders",true,"LabelSource","foldernames");
+% clear all
+name= "Rebexis";
+imds = imageDatastore(name,"IncludeSubfolders",true,"LabelSource","foldernames");
 imds = shuffle(imds);
 [imdsTrain,imdsVal,imdsTest] = splitEachLabel(imds,0.8,0.1,0.1,"randomized");
 
@@ -109,28 +110,39 @@ testSamples = table(imgTest);
 mainPath = [
     imageInputLayer([40 40 1],"Name","imageinput",Normalization="none")
     convolution2dLayer([3 3],8,"Name","conv_1","Padding","same")
-
     leakyReluLayer(0.1,"Name","leakyrelu_1")
+    convolution2dLayer([3 3],8,"Name","conv_1_1","Padding","same")
+    leakyReluLayer(0.1,"Name","leakyrelu_1_1")
+
     maxPooling2dLayer([2 2],"Name","maxpool_1","Padding","same")
     dropoutLayer(0.1,"Name","dropout_1")
-    convolution2dLayer([3 3],16,"Name","conv_2","Padding","same")
 
+    convolution2dLayer([3 3],16,"Name","conv_2","Padding","same")
     leakyReluLayer(0.1,"Name","leakyrelu_2")
+    convolution2dLayer([3 3],16,"Name","conv_2_1","Padding","same")
+    leakyReluLayer(0.1,"Name","leakyrelu_2_1")
+
     maxPooling2dLayer([2 2],"Name","maxpool_2","Padding","same")
     dropoutLayer(0.1,"Name","dropout_2")
-    convolution2dLayer([3 3],32,"Name","conv_3","Padding","same")
 
+    convolution2dLayer([3 3],32,"Name","conv_3","Padding","same")
     leakyReluLayer(0.1,"Name","leakyrelu_3")
+    convolution2dLayer([3 3],32,"Name","conv_3_1","Padding","same")
+    leakyReluLayer(0.1,"Name","leakyrelu_3_1")
+
     maxPooling2dLayer([2 2],"Name","maxpool_3","Padding","same")
     dropoutLayer(0.1,"Name","dropout_3")
+    
     convolution2dLayer([3 3],32,"Name","conv_4","Padding","same")
-
     leakyReluLayer(0.1,"Name","leakyrelu_4")
+    convolution2dLayer([3 3],32,"Name","conv_4_1","Padding","same")
+    leakyReluLayer(0.1,"Name","leakyrelu_4_1")
+
     maxPooling2dLayer([2 2],"Name","maxpool_4","Padding","same")
     dropoutLayer(0.1,"Name","dropout_4")
     fullyConnectedLayer(128,"Name","fc")
     leakyReluLayer(0.1,"Name","leakyrelu_5")
-    fullyConnectedLayer(256,"Name","fc_1")
+    fullyConnectedLayer(128,"Name","fc_1")
     leakyReluLayer(0.1,"Name","leakyrelu_6")
     fullyConnectedLayer(128,"Name","fc_2")
     leakyReluLayer(0.1,"Name","leakyrelu_7")];
@@ -154,32 +166,29 @@ regressionOptions = trainingOptions("sgdm", ...
     ValidationData = validationTable, ...
     MaxEpochs = 50, ...
     MiniBatchSize = 64, ...
-    ValidationFrequency=20,...
-    Plots = "training-progress",...
-    InitialLearnRate=0.0001,...
-    Verbose=0,...
-    Shuffle="every-epoch",...
-    OutputNetwork="best-validation",...
+    ValidationFrequency=20, ...
+    Plots = "training-progress", ...
+    InitialLearnRate=0.0001, ...
+    Verbose=0, ...
+    Shuffle="every-epoch", ...
+    OutputNetwork="best-validation", ...
     GradientThreshold=1e5);
 
 
 net = trainNetwork(trainTable,regressionNet,regressionOptions);
-ypred = predict(net,imdsTest);
+ypred = predict(net,testSamples);
 rmse = sqrt(mean((ypred-YTest).^2));
 %%
 figure(1);scatter(YTest(:,1),ypred(:,1));
 figure(2);scatter(YTest(:,2),ypred(:,2));
 
-diferense = sqrt((ypred(:,1)-YTest(:,1)).^2 + (ypred(:,2)-YTest(:,2)).^2);
-x = find(diferense>0.3);
-figure(3);scatter(ypred(:,1),ypred(:,2));
+diference = sqrt((ypred(:,1)-YTest(:,1)).^2 + (ypred(:,2)-YTest(:,2)).^2);
+x = find(diference>0.3);
+figure(3);scatter(ypred(:,1),ypred(:,2)); 
 hold on
 figure(3);scatter(ypred(x,1),ypred(x,2));
 figure(4);boxplot(ypred(:,1),YTest(:,1));
 figure(5);boxplot(ypred(:,2),YTest(:,2));
-
-
-function stop = stopTraining(info,lossThreshold)
-    trainingLoss = info.TrainingLoss;
-    stop = trainingLoss < lossThreshold;
-end
+l = double(string(imdsTest.Labels)); % test lables(double)
+boxplot(diference,l);
+% end
