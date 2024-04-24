@@ -10,14 +10,15 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         Reward = [];
         counter = 0;
         sampleTime = 0.25;
+        index_theta = 0;
         Fs = 200; %Hz samplefrequency
-        RewardForReachingGoal = 20;
+        RewardForReachingGoal = 10;
         %RewardForCorrectQuadrant = 1;
-        blue_marker_radius = 0.08; % Acceptable distance to the goal point
+        blue_marker_radius = 0.1; % Acceptable distance to the goal point
         MaxRo = 1; %unit circle radius
         PenaltyForOutOfLimits = -10;
         mvc = 30;
-        Ts = 1;
+        Ts = 0.5;
         %PenaltyForNotReachingGoal = -1;%penalty for not reaching the goal for every try
         %StepThreshold = 10;% the number of steps to fail the episode
     end
@@ -63,7 +64,7 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         % given action for one step.
         function [Observation,Reward,IsDone,LoggedSignals] = step(this,Action)
             LoggedSignals = [];
-            this.counter = this.counter+1;
+            
             %get action
             action_location = Action;
             Observation = this.State{3};
@@ -72,29 +73,27 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
             goal_Y = goal_location(2);
             act_X = action_location(1);
             act_Y = action_location(2);
-            s = sqrt(act_Y^2 + act_X^2);
+            %s = sqrt(act_Y^2 + act_X^2);
+
+            
             this.State = {goal_location,action_location,Observation};
             notifyEnvUpdated(this);
             distMax = 1+sqrt(2); %largest possible distance. 
             IsDone = false;
-            if s > 1
-                penalty = this.PenaltyForOutOfLimits;
-                %IsDone = true;
-            else 
-                penalty = 0;
-            end
+
             %reward
-            R = sqrt((act_X - goal_X)^2 + (act_Y- goal_Y)^2);
-            if R <= this.blue_marker_radius
+            dist = sqrt((act_X - goal_X)^2 + (act_Y- goal_Y)^2);
+            if dist <= this.blue_marker_radius
                 Reward = this.RewardForReachingGoal;
                 %IsDone = true;
+
             else
-                Reward = abs(1 + sqrt(2) - R);
+                Reward = 0.1*((-sqrt(abs(dist-this.blue_marker_radius))+distMax)^3);
             end
-            this.Reward = Reward + penalty;
+            this.Reward = Reward
             % Check terminal condition
             
-            
+            %LoggedSignals = [Action,goal_location,Reward]
 
 
         end
@@ -102,46 +101,85 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         % Reset environment to initial state and output initial observation
         function InitialObservation = reset(this)
             action_location0 = [0 0];% the curser is located at the origin
-            goal_location = getGoalLocation(this)
-            this.State = {goal_location; action_location0; this.State};
-            notifyEnvUpdated(this);
-            prompt = "Are you ready? [y/n]";
-            txt = input(prompt,"s");
-            if isempty(txt)
-                txt = 'y';
+            goal_location = this.State{1};
+            this.counter = this.counter + 1;
+            if this.counter > 10
+                this.counter = 1;
             end
-            if txt == 'y'
-                InitialObservation = initMyo(this);
+            if this.counter == 1
+                goal_location = getGoalLocation(this);
+                this.State = {goal_location; action_location0; this.State};
+                notifyEnvUpdated(this);
+                txt = 'n';
+                while txt == 'n'
+                    prompt = "Are you ready? [y/n]";
+                    txt = input(prompt,"s");
+                    if isempty(txt)
+                        txt = 'y';
+                    end
+                    if txt == 'y'
+                        initMyo(this);
+
+                    end
+                end
+                %this.counter = 1; 
             end
+            
+            disp(this.counter);
+            img_name = sprintf('Sample%d.jpeg', this.counter);
+            ss = imread(img_name);
+            InitialObservation =  im2double(ss);
             this.State = {goal_location; action_location0; InitialObservation};
 
+            notifyEnvUpdated(this);
         end
     end
     %% Optional Methods (set methods' attributes accordingly)
     methods
         %Helper methods to create the environment
-        function myoIsHere = initMyo(this)
+        function initMyo(this)
             emg = [];
             mm = MyoMex(); %mm = this.Myo;
             m1 = mm.myoData();
-            pause(3);
-            emg = m1.emg_log(end-399:end,:);
-            figure(3);
-            figure(3);subplot(8,1,1);plot(emg(:,1));ylim([-1, 1]);
-            figure(3);subplot(8,1,2);plot(emg(:,2));ylim([-1, 1]);
-            figure(3);subplot(8,1,3);plot(emg(:,3));ylim([-1, 1]);
-            figure(3);subplot(8,1,4);plot(emg(:,4));ylim([-1, 1]);
-            figure(3);subplot(8,1,5);plot(emg(:,5));ylim([-1, 1]);
-            figure(3);subplot(8,1,6);plot(emg(:,6));ylim([-1, 1]);
-            figure(3);subplot(8,1,7);plot(emg(:,7));ylim([-1, 1]);
-            figure(3);subplot(8,1,8);plot(emg(:,8));ylim([-1, 1]);
-            img_matrix = emg(end-39:end,:);
-            img_resize = repelem(img_matrix,1,5);
-            file = "EMGsample";
-            imwrite(img_resize,file,"jpeg");
-            ss = imread("EMGsample");
-            InitialObservation =  im2double(ss);
-            myoIsHere = InitialObservation;
+            
+            confirm = false;
+            while ~ confirm
+                pause(3);
+                emg = m1.emg_log(end-399:end,:);
+                figure(3);
+                figure(3);subplot(8,1,1);plot(emg(:,1));ylim([-1, 1]);
+                figure(3);subplot(8,1,2);plot(emg(:,2));ylim([-1, 1]);
+                figure(3);subplot(8,1,3);plot(emg(:,3));ylim([-1, 1]);
+                figure(3);subplot(8,1,4);plot(emg(:,4));ylim([-1, 1]);
+                figure(3);subplot(8,1,5);plot(emg(:,5));ylim([-1, 1]);
+                figure(3);subplot(8,1,6);plot(emg(:,6));ylim([-1, 1]);
+                figure(3);subplot(8,1,7);plot(emg(:,7));ylim([-1, 1]);
+                figure(3);subplot(8,1,8);plot(emg(:,8));ylim([-1, 1]);
+                prompt = "Do you confirm? [y/n]";
+                txt = input(prompt,"s");
+                if isempty(txt)
+                    txt = 'y';
+                end
+                if txt == 'y'
+                    confirm = true;
+                end
+            end
+            %img_matrix = emg(end-39:end,:);
+            partision = [];
+            for j = 1:8
+                partision(:,j,:) = buffer(emg(:,j),40,10);
+            end
+            for i = 1:10
+                img_name = sprintf('Sample%d.jpeg', i);
+                %file_name = fullfile(folder_name + '\' + img_name);
+                img_matrix = abs(partision(:,:,i));
+                [img_envelope,~] = envelope(img_matrix,5);
+                img_resize = repelem(img_envelope,1,5);
+                imwrite(img_resize,img_name);
+            end
+
+%             Observation =  im2double(ss);
+%             myoIsHere = Observation()
 
 
              mm.delete;
@@ -154,16 +192,20 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
         end
 
         function goal_location = getGoalLocation(this)
+            this.index_theta = this.index_theta + 1;
+            if this.index_theta == 10
+                this.index_theta = 1;
+            end
             ro = [1,0.5,0];
-            theta = linspace(0,2*pi,9);
-           
-            index_theta = randperm(9,1)
-            if index_theta == 1
-                index_ro = 3
+            %theta = linspace(0,2*pi,9);
+           theta = [0,pi,pi/2,2*pi,3*pi/2,pi/4,3*pi/4,7*pi/4,5*pi/4];
+            %index_theta = randperm(9,1)
+            if this.index_theta == 1
+                index_ro = 3;
             else
                 index_ro = randperm(1,1);
             end
-            [x,y] = pol2cart(theta(index_theta),ro(index_ro));
+            [x,y] = pol2cart(theta(this.index_theta),ro(index_ro));
             goal_location = [x y];
 
         end
@@ -220,7 +262,8 @@ classdef MyoEnvironment < rl.env.MATLABEnvironment
                 action_point = scatter(ha,x_action,y_action,"green","g",'Marker','*',"LineWidth",5);
                 action_point.Tag = 'action_point';
                 drawnow;
-                disp('hera')
+                %disp('hera')
+
                 
                 
             end
